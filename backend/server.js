@@ -27,18 +27,72 @@ let links = {
 
 // API 路由
 app.get('/api/links', (req, res) => {
-    console.log('GET /api/links');
     res.json(links);
 });
 
+// 获取所有分类
+app.get('/api/categories', (req, res) => {
+    res.json(Object.keys(links));
+});
+
+// 添加新分类
+app.post('/api/categories', (req, res) => {
+    try {
+        const { category } = req.body;
+        if (!category) {
+            throw new Error('Missing category name');
+        }
+        if (links[category]) {
+            throw new Error('Category already exists');
+        }
+        links[category] = [];
+        res.json({ success: true });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// 重命名分类
+app.put('/api/categories/:oldName', (req, res) => {
+    try {
+        const { oldName } = req.params;
+        const { newName } = req.body;
+        
+        if (!newName) {
+            throw new Error('Missing new category name');
+        }
+        if (!links[oldName]) {
+            throw new Error('Category not found');
+        }
+        if (links[newName]) {
+            throw new Error('New category name already exists');
+        }
+        
+        links[newName] = links[oldName];
+        delete links[oldName];
+        res.json({ success: true });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// 删除分类
+app.delete('/api/categories/:category', (req, res) => {
+    try {
+        const { category } = req.params;
+        if (!links[category]) {
+            throw new Error('Category not found');
+        }
+        delete links[category];
+        res.json({ success: true });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
 app.post('/api/links', (req, res) => {
-    console.log('POST /api/links');
-    console.log('Request body:', req.body);
     try {
         const { category, link } = req.body;
-        console.log('Category:', category);
-        console.log('Link:', link);
-        
         if (!category || !link) {
             throw new Error('Missing category or link');
         }
@@ -47,7 +101,6 @@ app.post('/api/links', (req, res) => {
             links[category] = [];
         }
         links[category].push(link);
-        console.log('Updated links:', links);
         res.json({ success: true });
     } catch (error) {
         console.error('Error in POST /api/links:', error);
@@ -85,5 +138,4 @@ app.use((err, req, res, next) => {
     });
 });
 
-// 导出 app 而不是启动服务器
 module.exports = app; 

@@ -38,11 +38,26 @@
             box-shadow: 0 2px 12px rgba(0,0,0,0.05);
         }
 
-        .category-title {
-            color: #34495e;
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 1rem;
             padding-bottom: 0.5rem;
             border-bottom: 2px solid #eee;
+        }
+
+        .category-title {
+            color: #34495e;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .category-actions {
+            display: flex;
+            gap: 0.5rem;
         }
 
         .links {
@@ -56,6 +71,7 @@
             border-radius: 8px;
             background: #f8f9fa;
             transition: all 0.3s ease;
+            position: relative;
         }
 
         .link-card:hover {
@@ -75,6 +91,70 @@
             margin-top: 0.5rem;
         }
 
+        .add-form {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+        }
+
+        input, select, button {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-edit {
+            background: #f1c40f;
+        }
+
+        .btn-edit:hover {
+            background: #f39c12;
+        }
+
+        .delete-btn {
+            color: #e74c3c;
+            cursor: pointer;
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: 1rem;
@@ -84,53 +164,33 @@
                 grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             }
         }
-
-        .add-form {
-            background: white;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-        }
-
-        .add-form input, .add-form select {
-            padding: 0.5rem;
-            margin: 0.5rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-
-        .add-form button {
-            background: #3498db;
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .delete-btn {
-            color: #e74c3c;
-            cursor: pointer;
-            float: right;
-            font-size: 0.8rem;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>我的导航</h1>
 
+        <!-- 添加新分类的表单 -->
+        <div class="add-form">
+            <div class="form-group">
+                <label>添加新分类</label>
+                <input type="text" id="newCategory" placeholder="输入分类名称">
+                <button onclick="addNewCategory()">添加分类</button>
+            </div>
+        </div>
+
         <!-- 添加新链接的表单 -->
         <div class="add-form">
-            <select id="category">
-                <option value="常用工具">常用工具</option>
-                <option value="学习资源">学习资源</option>
-                <option value="娱乐放松">娱乐放松</option>
-            </select>
-            <input type="text" id="title" placeholder="网站名称">
-            <input type="url" id="url" placeholder="网站地址">
-            <input type="text" id="description" placeholder="简短描述">
-            <button onclick="addNewLink()">添加</button>
+            <div class="form-group">
+                <label>添加新链接</label>
+                <select id="category"></select>
+            </div>
+            <div class="form-group">
+                <input type="text" id="title" placeholder="网站名称">
+                <input type="url" id="url" placeholder="网站地址">
+                <input type="text" id="description" placeholder="简短描述">
+                <button onclick="addNewLink()">添加链接</button>
+            </div>
         </div>
 
         <div id="categories"></div>
@@ -144,10 +204,24 @@
             const container = document.getElementById('categories');
             container.innerHTML = '';
 
+            // 更新分类选择框
+            const categorySelect = document.getElementById('category');
+            categorySelect.innerHTML = Object.keys(links)
+                .map(cat => `<option value="${cat}">${cat}</option>`)
+                .join('');
+
             for (const [category, items] of Object.entries(links)) {
                 const categoryHtml = `
                     <div class="category">
-                        <h2 class="category-title">${category}</h2>
+                        <div class="category-header">
+                            <h2 class="category-title">
+                                ${category}
+                            </h2>
+                            <div class="category-actions">
+                                <button class="btn-edit" onclick="renameCategory('${category}')">重命名</button>
+                                <button class="btn-danger" onclick="deleteCategory('${category}')">删除分类</button>
+                            </div>
+                        </div>
                         <div class="links">
                             ${items.map((link, index) => `
                                 <div class="link-card">
@@ -160,6 +234,78 @@
                     </div>
                 `;
                 container.innerHTML += categoryHtml;
+            }
+        }
+
+        // 添加新分类
+        async function addNewCategory() {
+            const categoryInput = document.getElementById('newCategory');
+            const category = categoryInput.value.trim();
+            
+            if (!category) {
+                alert('请输入分类名称');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/categories', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ category })
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error);
+                }
+
+                categoryInput.value = '';
+                loadLinks();
+            } catch (error) {
+                alert('添加分类失败: ' + error.message);
+            }
+        }
+
+        // 重命名分类
+        async function renameCategory(oldName) {
+            const newName = prompt('请输入新的分类名称:', oldName);
+            if (!newName || newName === oldName) return;
+
+            try {
+                const response = await fetch(`/api/categories/${encodeURIComponent(oldName)}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ newName })
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error);
+                }
+
+                loadLinks();
+            } catch (error) {
+                alert('重命名分类失败: ' + error.message);
+            }
+        }
+
+        // 删除分类
+        async function deleteCategory(category) {
+            if (!confirm(`确定要删除 "${category}" 分类吗？这将删除该分类下的所有链接！`)) return;
+
+            try {
+                const response = await fetch(`/api/categories/${encodeURIComponent(category)}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error);
+                }
+
+                loadLinks();
+            } catch (error) {
+                alert('删除分类失败: ' + error.message);
             }
         }
 
@@ -187,8 +333,6 @@
                 category,
                 link: { title, url, description }
             };
-            
-            console.log('Sending data:', data);
 
             try {
                 const response = await fetch('/api/links', {
@@ -197,22 +341,19 @@
                     body: JSON.stringify(data)
                 });
                 
-                console.log('Response status:', response.status);
-                const responseData = await response.json();
-                console.log('Response data:', responseData);
-                
                 if (!response.ok) {
+                    const responseData = await response.json();
                     throw new Error(responseData.error || 'Failed to add link');
                 }
 
-                loadLinks();
                 // 清空输入框
                 document.getElementById('title').value = '';
                 document.getElementById('url').value = '';
                 document.getElementById('description').value = '';
+                
+                loadLinks();
             } catch (error) {
-                console.error('Error adding link:', error);
-                alert('Failed to add link: ' + error.message);
+                alert('添加链接失败: ' + error.message);
             }
         }
 
@@ -220,12 +361,19 @@
         async function deleteLink(category, index) {
             if (!confirm('确定要删除这个链接吗？')) return;
 
-            const response = await fetch(`/api/links/${category}/${index}`, {  // 修改这里
-        method: 'DELETE'
-            });
+            try {
+                const response = await fetch(`/api/links/${encodeURIComponent(category)}/${index}`, {
+                    method: 'DELETE'
+                });
 
-            if (response.ok) {
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error);
+                }
+
                 loadLinks();
+            } catch (error) {
+                alert('删除链接失败: ' + error.message);
             }
         }
 
