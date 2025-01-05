@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的导航</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #f5f6fa;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 2rem;
+            font-weight: 500;
+        }
+
+        .category {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        }
+
+        .category-title {
+            color: #34495e;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #eee;
+        }
+
+        .links {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .link-card {
+            padding: 1rem;
+            border-radius: 8px;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+
+        .link-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .link-card a {
+            color: #3498db;
+            text-decoration: none;
+            display: block;
+        }
+
+        .link-card p {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            .links {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+        }
+
+        .add-form {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .add-form input, .add-form select {
+            padding: 0.5rem;
+            margin: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .add-form button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .delete-btn {
+            color: #e74c3c;
+            cursor: pointer;
+            float: right;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>我的导航</h1>
+
+        <!-- 添加新链接的表单 -->
+        <div class="add-form">
+            <select id="category">
+                <option value="常用工具">常用工具</option>
+                <option value="学习资源">学习资源</option>
+                <option value="娱乐放松">娱乐放松</option>
+            </select>
+            <input type="text" id="title" placeholder="网站名称">
+            <input type="url" id="url" placeholder="网站地址">
+            <input type="text" id="description" placeholder="简短描述">
+            <button onclick="addNewLink()">添加</button>
+        </div>
+
+        <div id="categories"></div>
+    </div>
+
+    <script>
+        // 加载所有链接
+        async function loadLinks() {
+            const response = await fetch('/api/links');
+            const links = await response.json();
+            const container = document.getElementById('categories');
+            container.innerHTML = '';
+
+            for (const [category, items] of Object.entries(links)) {
+                const categoryHtml = `
+                    <div class="category">
+                        <h2 class="category-title">${category}</h2>
+                        <div class="links">
+                            ${items.map((link, index) => `
+                                <div class="link-card">
+                                    <span class="delete-btn" onclick="deleteLink('${category}', ${index})">×</span>
+                                    <a href="${link.url}" target="_blank">${link.title}</a>
+                                    <p>${link.description}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += categoryHtml;
+            }
+        }
+
+        // 添加新链接
+        async function addNewLink() {
+            const category = document.getElementById('category').value;
+            const title = document.getElementById('title').value;
+            const url = document.getElementById('url').value;
+            const description = document.getElementById('description').value;
+
+            const data = {
+                category,
+                link: { title, url, description }
+            };
+            
+            console.log('Sending data:', data);
+
+            try {
+                const response = await fetch('/api/links', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                console.log('Response status:', response.status);
+                const responseData = await response.json();
+                console.log('Response data:', responseData);
+                
+                if (!response.ok) {
+                    throw new Error(responseData.error || 'Failed to add link');
+                }
+
+                loadLinks();
+                // 清空输入框
+                document.getElementById('title').value = '';
+                document.getElementById('url').value = '';
+                document.getElementById('description').value = '';
+            } catch (error) {
+                console.error('Error adding link:', error);
+                alert('Failed to add link: ' + error.message);
+            }
+        }
+
+        // 删除链接
+        async function deleteLink(category, index) {
+            if (!confirm('确定要删除这个链接吗？')) return;
+
+            const response = await fetch(`/api/links/${category}/${index}`, {  // 修改这里
+        method: 'DELETE'
+            });
+
+            if (response.ok) {
+                loadLinks();
+            }
+        }
+
+        // 页面加载时获取链接
+        loadLinks();
+    </script>
+</body>
+</html> 
