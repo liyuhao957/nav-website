@@ -51,8 +51,23 @@ const connectDB = async () => {
   }
 };
 
+// 数据库连接错误处理
+mongoose.connection.on('error', (err) => {
+  console.error('MongoDB connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected');
+  connectDB(); // 尝试重新连接
+});
+
 // 连接数据库
 connectDB();
+
+// 健康检查路由
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
 
 // API 路由
 app.get('/api/links', async (req, res) => {
