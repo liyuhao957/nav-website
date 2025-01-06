@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TC</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #f5f6fa;
+            line-height: 1.6;
+            display: flex;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 2rem;
+            font-weight: 500;
+        }
+
+        .category {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #eee;
+        }
+
+        .category-title {
+            color: #34495e;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .category-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .links {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .link-card {
+            padding: 1rem;
+            border-radius: 8px;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .link-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .link-card a {
+            color: #3498db;
+            text-decoration: none;
+            display: block;
+        }
+
+        .link-card p {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .add-form {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+        }
+
+        input, select, button {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-edit {
+            background: #f1c40f;
+        }
+
+        .btn-edit:hover {
+            background: #f39c12;
+        }
+
+        .delete-btn {
+            color: #e74c3c;
+            cursor: pointer;
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+
+        /* 添加侧边栏样式 */
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .sidebar.collapsed {
+            width: 60px;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            position: relative;
+        }
+
+        .toggle-btn {
+            position: absolute;
+            right: -12px;
+            top: 20px;
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-links {
+            padding: 20px 0;
+        }
+
+        .nav-link {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            color: #2c3e50;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            background: #f8f9fa;
+            color: #3498db;
+        }
+
+        .nav-link i {
+            margin-right: 15px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .nav-link span {
+            opacity: 1;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar.collapsed .nav-link span {
+            opacity: 0;
+            width: 0;
+            display: none;
+        }
+
+        /* 主内容区域样式调整 */
+        .main-content {
+            margin-left: 250px;
+            padding: 2rem;
+            width: calc(100% - 250px);
+            transition: all 0.3s ease;
+        }
+
+        .main-content.expanded {
+            margin-left: 60px;
+            width: calc(100% - 60px);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 60px;
+            }
+            
+            .sidebar .nav-link span {
+                display: none;
+            }
+            
+            .main-content {
+                margin-left: 60px;
+                width: calc(100% - 60px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 侧边栏 -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3>TC</h3>
+            <div class="toggle-btn" onclick="toggleSidebar()">
+                <i class="fas fa-chevron-left"></i>
+            </div>
+        </div>
+        <div class="nav-links">
+            <a href="#常用工具" class="nav-link">
+                <i class="fas fa-tools"></i>
+                <span>常用工具</span>
+            </a>
+            <a href="#学习资源" class="nav-link">
+                <i class="fas fa-book"></i>
+                <span>学习资源</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- 主内容区域 -->
+    <div class="main-content" id="main-content">
+        <div class="container">
+            <h1>TC</h1>
+
+            <!-- 添加新分类的表单 -->
+            <div class="add-form">
+                <div class="form-group">
+                    <label>添加新分类</label>
+                    <input type="text" id="newCategory" placeholder="输入分类名称">
+                    <button onclick="addNewCategory()">添加分类</button>
+                </div>
+            </div>
+
+            <!-- 添加新链接的表单 -->
+            <div class="add-form">
+                <div class="form-group">
+                    <label>添加新链接</label>
+                    <select id="category"></select>
+                </div>
+                <div class="form-group">
+                    <input type="text" id="title" placeholder="网站名称">
+                    <input type="url" id="url" placeholder="网站地址">
+                    <input type="text" id="description" placeholder="简短描述">
+                    <button onclick="addNewLink()">添加链接</button>
+                </div>
+            </div>
+
+            <div id="categories"></div>
+        </div>
+    </div>
+
+    <script>
+        // 加载所有链接
+        async function loadLinks() {
+            const response = await fetch('/api/links');
+            const links = await response.json();
+            const container = document.getElementById('categories');
+            container.innerHTML = '';
+
+            // 更新分类选择框
+            const categorySelect = document.getElementById('category');
+            categorySelect.innerHTML = Object.keys(links)
+                .map(cat => `<option value="${cat}">${cat}</option>`)
+                .join('');
+
+            for (const [category, items] of Object.entries(links)) {
+                const categoryHtml = `
+                    <div class="category">
+                        <div class="category-header">
+                            <h2 class="category-title">
+                                ${category}
+                            </h2>
+                            <div class="category-actions">
+                                <button class="btn-edit" onclick="renameCategory('${category}')">重命名</button>
+                                <button class="btn-danger" onclick="deleteCategory('${category}')">删除分类</button>
+                            </div>
+                        </div>
+                        <div class="links">
+                            ${items.map((link, index) => `
+                                <div class="link-card">
+                                    <span class="delete-btn" onclick="deleteLink('${category}', ${index})">×</span>
+                                    <a href="${link.url}" target="_blank">${link.title}</a>
+                                    <p>${link.description}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += categoryHtml;
+            }
+        }
+
+        // 添加新分类
+        async function addNewCategory() {
+            const categoryInput = document.getElementById('newCategory');
+            const category = categoryInput.value.trim();
+            
+            if (!category) {
+                alert('请输入分类名称');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/categories', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ category })
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error);
+                }
+
+                categoryInput.value = '';
+                loadLinks();
+            } catch (error) {
+                alert('添加分类失败: ' + error.message);
+            }
+        }
+
+        // 重命名分类
+        async function renameCategory(oldName) {
+            const newName = prompt('请输入新的分类名称:', oldName);
+            if (!newName || newName === oldName) return;
+
+            try {
+                const response = await fetch(`/api/categories/${encodeURIComponent(oldName)}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ newName })
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error);
+                }
+
+                loadLinks();
+            } catch (error) {
+                alert('重命名分类失败: ' + error.message);
+            }
+        }
+
+        // 删除分类
+        async function deleteCategory(category) {
+            if (!confirm(`确定要删除 "${category}" 分类吗？这将删除该分类下的所有链接！`)) return;
+
+            try {
+                const response = await fetch(`/api/categories/${encodeURIComponent(category)}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error);
+                }
+
+                loadLinks();
+            } catch (error) {
+                alert('删除分类失败: ' + error.message);
+            }
+        }
+
+        // 添加新链接
+        async function addNewLink() {
+            const category = document.getElementById('category').value;
+            const title = document.getElementById('title').value;
+            let url = document.getElementById('url').value.trim();
+            const description = document.getElementById('description').value;
+
+            // 如果URL不包含协议，自动添加https://
+            if (url && !url.match(/^https?:\/\//)) {
+                url = 'https://' + url;
+            }
+
+            // URL格式验证
+            try {
+                new URL(url);
+            } catch (e) {
+                alert('请输入有效的网址，例如: https://www.baidu.com');
+                return;
+            }
+
+            const data = {
+                category,
+                link: { title, url, description }
+            };
+
+            try {
+                const response = await fetch('/api/links', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    const responseData = await response.json();
+                    throw new Error(responseData.error || 'Failed to add link');
+                }
+
+                // 清空输入框
+                document.getElementById('title').value = '';
+                document.getElementById('url').value = '';
+                document.getElementById('description').value = '';
+                
+                loadLinks();
+            } catch (error) {
+                alert('添加链接失败: ' + error.message);
+            }
+        }
+
+        // 删除链接
+        async function deleteLink(category, index) {
+            if (!confirm('确定要删除这个链接吗？')) return;
+
+            try {
+                const response = await fetch(`/api/links/${encodeURIComponent(category)}/${index}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error);
+                }
+
+                loadLinks();
+            } catch (error) {
+                alert('删除链接失败: ' + error.message);
+            }
+        }
+
+        // 页面加载时获取链接
+        loadLinks();
+
+        // 侧边栏切换功能
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('main-content');
+            const toggleBtn = document.querySelector('.toggle-btn i');
+            
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+            
+            // 切换箭头方向
+            if (sidebar.classList.contains('collapsed')) {
+                toggleBtn.classList.remove('fa-chevron-left');
+                toggleBtn.classList.add('fa-chevron-right');
+            } else {
+                toggleBtn.classList.remove('fa-chevron-right');
+                toggleBtn.classList.add('fa-chevron-left');
+            }
+        }
+
+        // 点击导航链接滚动到对应区域
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = link.getAttribute('href').slice(1);
+                const targetElement = document.getElementById(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+</body>
+</html> 
