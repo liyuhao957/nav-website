@@ -320,10 +320,187 @@
     </div>
 
     <script>
-        // JavaScript 代码保持不变
-        // ... 原有的所有函数 ...
+        // 加载所有链接
+        async function loadLinks() {
+            try {
+                const response = await fetch('/api/links');
+                const links = await response.json();
+                const container = document.getElementById('categories');
+                container.innerHTML = '';
 
-        // 添加侧边栏相关的新函数
+                // 更新分类选择框
+                const categorySelect = document.getElementById('category');
+                categorySelect.innerHTML = Object.keys(links)
+                    .map(cat => `<option value="${cat}">${cat}</option>`)
+                    .join('');
+
+                // 显示所有分类和链接
+                for (const [category, items] of Object.entries(links)) {
+                    const categoryHtml = `
+                        <div class="category" id="${category}">
+                            <div class="category-header">
+                                <h2 class="category-title">${category}</h2>
+                                <div class="category-actions">
+                                    <button class="btn-edit" onclick="renameCategory('${category}')">重命名</button>
+                                    <button class="btn-danger" onclick="deleteCategory('${category}')">删除分类</button>
+                                </div>
+                            </div>
+                            <div class="links">
+                                ${items.map((link, index) => `
+                                    <div class="link-card">
+                                        <span class="delete-btn" onclick="deleteLink('${category}', ${index})">×</span>
+                                        <a href="${link.url}" target="_blank">${link.title}</a>
+                                        <p>${link.description}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += categoryHtml;
+                }
+            } catch (error) {
+                console.error('Error loading links:', error);
+            }
+        }
+
+        // 添加新分类
+        async function addNewCategory() {
+            const categoryInput = document.getElementById('newCategory');
+            const category = categoryInput.value.trim();
+            
+            if (!category) {
+                alert('请输入分类名称');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/categories', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ category })
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error);
+                }
+
+                categoryInput.value = '';
+                loadLinks();
+            } catch (error) {
+                alert('添加分类失败: ' + error.message);
+            }
+        }
+
+        // 重命名分类
+        async function renameCategory(oldName) {
+            const newName = prompt('请输入新的分类名称:', oldName);
+            if (!newName || newName === oldName) return;
+
+            try {
+                const response = await fetch(`/api/categories/${encodeURIComponent(oldName)}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ newName })
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error);
+                }
+
+                loadLinks();
+            } catch (error) {
+                alert('重命名分类失败: ' + error.message);
+            }
+        }
+
+        // 删除分类
+        async function deleteCategory(category) {
+            if (!confirm(`确定要删除 "${category}" 分类吗？这将删除该分类下的所有链接！`)) return;
+
+            try {
+                const response = await fetch(`/api/categories/${encodeURIComponent(category)}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error);
+                }
+
+                loadLinks();
+            } catch (error) {
+                alert('删除分类失败: ' + error.message);
+            }
+        }
+
+        // 添加新链接
+        async function addNewLink() {
+            const category = document.getElementById('category').value;
+            const title = document.getElementById('title').value;
+            let url = document.getElementById('url').value.trim();
+            const description = document.getElementById('description').value;
+
+            if (url && !url.match(/^https?:\/\//)) {
+                url = 'https://' + url;
+            }
+
+            try {
+                new URL(url);
+            } catch (e) {
+                alert('请输入有效的网址，例如: https://www.example.com');
+                return;
+            }
+
+            const data = {
+                category,
+                link: { title, url, description }
+            };
+
+            try {
+                const response = await fetch('/api/links', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    const responseData = await response.json();
+                    throw new Error(responseData.error || 'Failed to add link');
+                }
+
+                document.getElementById('title').value = '';
+                document.getElementById('url').value = '';
+                document.getElementById('description').value = '';
+                
+                loadLinks();
+            } catch (error) {
+                alert('添加链接失败: ' + error.message);
+            }
+        }
+
+        // 删除链接
+        async function deleteLink(category, index) {
+            if (!confirm('确定要删除这个链接吗？')) return;
+
+            try {
+                const response = await fetch(`/api/links/${encodeURIComponent(category)}/${index}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error);
+                }
+
+                loadLinks();
+            } catch (error) {
+                alert('删除链接失败: ' + error.message);
+            }
+        }
+
+        // 侧边栏切换功能
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const mainContent = document.getElementById('main-content');
