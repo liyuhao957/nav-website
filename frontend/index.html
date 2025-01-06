@@ -14,11 +14,15 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            padding: 40px;
-            max-width: 1000px;
-            margin: 0 auto;
-            background: #f5f7fa;
+            padding: 0;
+            margin-left: var(--sidebar-width, 250px);
+            background: #f8fafc;
             color: #2c3e50;
+            transition: margin-left 0.3s ease;
+        }
+
+        body.sidebar-collapsed {
+            margin-left: 60px;
         }
 
         .back-button {
@@ -36,39 +40,58 @@
 
         h1 {
             font-size: 48px;
-            margin: 30px 0;
+            margin: 30px auto;
             color: #2c3e50;
             font-weight: 700;
             letter-spacing: -1px;
+            text-align: center;
+            width: fit-content;
+            padding: 0 20px;
+            position: relative;
+        }
+
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 4px;
+            background: #00ff9d;
+            border-radius: 2px;
         }
 
         .search-container {
-            margin-bottom: 40px;
+            margin-bottom: 0;
             background: white;
             padding: 25px;
             border-radius: 15px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 15px;
+            align-items: center;
         }
 
         .search-input {
-            width: 100%;
-            padding: 15px;
+            width: 300px;
+            padding: 12px 20px;
             font-size: 16px;
             border: 2px solid #e1e8ed;
-            border-radius: 10px;
-            margin-bottom: 15px;
+            border-radius: 8px;
             transition: all 0.3s ease;
+            outline: none;
+            background-color: white;
         }
 
         .search-input:focus {
-            outline: none;
-            border-color: #007AFF;
-            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
         }
 
         .search-options {
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-start;
             align-items: center;
             gap: 20px;
         }
@@ -76,6 +99,7 @@
         .radio-group {
             display: flex;
             gap: 20px;
+            margin-left: 10px;
         }
 
         .radio-label {
@@ -88,6 +112,7 @@
             background: #f8f9fa;
             border-radius: 8px;
             transition: all 0.3s ease;
+            margin-top: 5px;
         }
 
         .radio-label:hover {
@@ -100,20 +125,21 @@
         }
 
         .search-button {
-            padding: 12px 30px;
-            background-color: #007AFF;
+            padding: 12px 24px;
+            background-color: #007bff;
             color: white;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             font-size: 16px;
-            font-weight: 500;
             transition: all 0.3s ease;
+            height: 45px;
+            white-space: nowrap;
         }
 
         .search-button:hover {
             background-color: #0056b3;
-            transform: translateY(-2px);
+            transform: translateY(-1px);
             box-shadow: 0 4px 8px rgba(0, 122, 255, 0.2);
         }
 
@@ -136,7 +162,6 @@
         .category-input {
             width: 300px;
             padding: 12px;
-            margin-right: 15px;
             border: 2px solid #e1e8ed;
             border-radius: 8px;
             font-size: 16px;
@@ -159,6 +184,8 @@
             font-size: 16px;
             font-weight: 500;
             transition: all 0.3s ease;
+            height: 45px;
+            white-space: nowrap;
         }
 
         .add-button:hover {
@@ -300,57 +327,80 @@
 
         .links-container {
             margin-top: 20px;
+            position: relative;
+            width: 100%;
+        }
+
+        .links-header {
             display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 0 20px;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 10;
+        }
+
+        .links-title {
+            font-size: 20px;
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        .category-filter {
+            min-width: 200px;
+        }
+
+        #linksCategorySelect {
+            width: 100%;
+            padding: 8px 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #2c3e50;
+        }
+
+        .links-list-container {
+            width: 100%;
+            position: relative;
         }
 
         .category-section {
-            flex: 1;
-            min-width: 300px;
-            background: white;
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            margin-bottom: 20px;
+            position: relative;
         }
 
-        .category-section h3 {
-            color: #2c3e50;
-            font-size: 18px;
-            margin-bottom: 15px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #f0f2f5;
-        }
-
+        /* 链接列表样式 */
         .links-list {
             display: flex;
+            flex-direction: row;
             flex-wrap: wrap;
             gap: 15px;
         }
 
         .link-item {
-            flex: 1;
-            min-width: 300px;
-            max-width: calc(50% - 15px);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px;
-            background: #f8f9fa;
+            background: white;
             border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            align-items: flex-start;
             transition: all 0.3s ease;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            width: auto;
         }
 
         .link-item:hover {
-            background: #e9ecef;
-            transform: translateY(-3px);
+            transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
         .link-content {
             display: flex;
-            align-items: center;
-            gap: 15px;
+            align-items: flex-start;
+            gap: 12px;
         }
 
         .link-favicon {
@@ -360,14 +410,16 @@
         }
 
         .link-info {
-            flex-grow: 1;
+            display: inline-block;
         }
 
         .link-title {
             color: #2c3e50;
             text-decoration: none;
             font-weight: 500;
-            font-size: 16px;
+            display: block;
+            margin-bottom: 4px;
+            white-space: nowrap;
         }
 
         .link-title:hover {
@@ -378,30 +430,56 @@
             color: #6c757d;
             font-size: 14px;
             margin-top: 4px;
+            white-space: nowrap;
         }
 
         .delete-button {
-            padding: 8px 15px;
-            background-color: #dc3545;
-            color: white;
-            border: none;
+            padding: 6px 12px;
+            background: white;
+            color: #dc3545;
+            border: 1px solid #dc3545;
             border-radius: 6px;
             cursor: pointer;
             font-size: 14px;
             transition: all 0.3s ease;
+            flex-shrink: 0;
+            white-space: nowrap;
+            height: fit-content;
         }
 
         .delete-button:hover {
-            background-color: #c82333;
+            background: #dc3545;
+            color: white;
+        }
+
+        .category-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .category-title {
+            color: #2c3e50;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .empty-message {
-            color: #6c757d;
             text-align: center;
             padding: 20px;
+            color: #6c757d;
             font-style: italic;
         }
 
+        /* 添加新链接表单样式 */
         .input-row {
             display: flex;
             gap: 15px;
@@ -414,23 +492,26 @@
 
         .input-group label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            font-weight: 500;
             color: #2c3e50;
-            font-size: 14px;
         }
 
-        #categorySelect, .title-input, .url-input, .description-input {
+        #categorySelect,
+        .title-input,
+        .url-input,
+        .description-input {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #e1e8ed;
+            padding: 12px;
+            border: 2px solid #e1e8ed;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 16px;
             transition: all 0.3s ease;
         }
 
-        #categorySelect:focus, 
-        .title-input:focus, 
-        .url-input:focus, 
+        #categorySelect:focus,
+        .title-input:focus,
+        .url-input:focus,
         .description-input:focus {
             outline: none;
             border-color: #007AFF;
@@ -444,7 +525,7 @@
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 16px;
             transition: all 0.3s ease;
             margin-top: 20px;
             display: block;
@@ -459,92 +540,698 @@
             box-shadow: 0 4px 8px rgba(0, 122, 255, 0.2);
         }
 
-        .category-section {
-            flex: 1;
-            min-width: 100%;
+        /* 在小屏幕上改为单列显示 */
+        @media (max-width: 768px) {
+            .link-item {
+                width: 100%;
+            }
+        }
+
+        /* Toast 样式 */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .toast {
+            background: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            margin: 10px;
+            opacity: 0;
+            transform: translateY(100%);
+            animation: slideIn 0.3s ease forwards;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .toast.success {
+            background: #28a745;
+        }
+
+        .toast.error {
+            background: #dc3545;
+        }
+
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideOut {
+            to {
+                opacity: 0;
+                transform: translateY(100%);
+            }
+        }
+
+        /* 添加删除分类按钮样式 */
+        .delete-category-button {
+            padding: 6px 12px;
+            background-color: #fff;
+            color: #dc3545;
+            border: 1px solid #dc3545;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .delete-category-button:hover {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        /* 确认对话框样式 */
+        .confirm-dialog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .confirm-dialog {
             background: white;
-            padding: 20px;
+            padding: 25px;
             border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            width: 90%;
+            max-width: 400px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .confirm-dialog-title {
+            font-size: 20px;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .confirm-dialog-message {
+            color: #6c757d;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .confirm-dialog-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .confirm-dialog-button {
+            padding: 10px 20px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .confirm-dialog-cancel {
+            background: #f8f9fa;
+            color: #2c3e50;
+        }
+
+        .confirm-dialog-cancel:hover {
+            background: #e9ecef;
+        }
+
+        .confirm-dialog-confirm {
+            background: #dc3545;
+            color: white;
+        }
+
+        .confirm-dialog-confirm:hover {
+            background: #c82333;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* 侧边栏样式 */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: var(--sidebar-width, 250px);
+            background: #f8f9fa;
+            backdrop-filter: blur(10px);
+            color: #2c3e50;
+            padding: 30px 0;
+            overflow-y: auto;
+            z-index: 1000;
+            border-right: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 4px 0 15px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        /* 导航菜单样式 */
+        .category-nav {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .category-nav-item {
+            margin: 5px 0;
+        }
+
+        .category-nav-header {
+            padding: 12px 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #2c3e50;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .category-nav-header:hover {
+            background: rgba(0, 122, 255, 0.08);
+        }
+
+        .category-nav-header.active {
+            background: rgba(0, 122, 255, 0.12);
+            color: #007AFF;
+        }
+
+        .category-nav-toggle {
+            font-size: 10px;
+            transition: transform 0.3s ease;
+            color: #6c757d;
+        }
+
+        .category-nav-toggle.expanded {
+            transform: rotate(90deg);
+            color: #007AFF;
+        }
+
+        .category-nav-links {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            background: rgba(0, 122, 255, 0.03);
+        }
+
+        .category-nav-links.expanded {
+            max-height: 500px;
+        }
+
+        .category-nav-link {
+            display: block;
+            padding: 10px 25px 10px 47px;
+            color: #6c757d;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .category-nav-link::before {
+            content: '';
+            position: absolute;
+            left: 25px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #007AFF;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .category-nav-link:hover {
+            background: rgba(0, 122, 255, 0.05);
+            color: #007AFF;
+        }
+
+        .category-nav-link:hover::before {
+            opacity: 1;
+        }
+
+        /* 收缩按钮样式 */
+        .sidebar-toggle {
+            position: absolute;
+            top: 15px;
+            right: -15px;
+            width: 30px;
+            height: 30px;
+            background: white;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            z-index: 1001;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-toggle:hover {
+            background: #f8f9fa;
+            transform: scale(1.1);
+        }
+
+        .sidebar-toggle i {
+            border: solid #2c3e50;
+            border-width: 0 2px 2px 0;
+            display: inline-block;
+            padding: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            width: 60px;
+            padding: 30px 0;
+        }
+
+        .sidebar.collapsed .category-nav-header {
+            padding: 12px 0;
+            justify-content: center;
+        }
+
+        .sidebar.collapsed .category-nav-header span:not(.category-nav-toggle) {
+            display: none;
+        }
+
+        .sidebar.collapsed .category-nav-toggle {
+            margin: 0;
+        }
+
+        .sidebar.collapsed .category-nav-links {
+            display: none;
+        }
+
+        /* 调整主体内容区域 */
+        body {
+            margin-left: var(--sidebar-width, 250px);
+            transition: margin-left 0.3s ease;
+        }
+
+        body.sidebar-collapsed {
+            margin-left: 60px;
+        }
+
+        /* 主要布局容器 */
+        .main-wrapper {
+            margin-left: var(--sidebar-width, 250px);
+            padding: 30px;
+            transition: margin-left 0.3s ease;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        /* 链接列表区域 */
+        .links-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 链接列表头部样式 */
+        .links-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .links-title {
+            font-size: 20px;
+            color: #2c3e50;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .category-filter select {
+            min-width: 200px;
+            padding: 10px 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #2c3e50;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .category-filter select:hover {
+            border-color: #007AFF;
+        }
+
+        /* 分类区域样式 */
+        .category-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
             margin-bottom: 20px;
         }
 
-        .category-section h3 {
+        .category-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .category-title span {
+            font-size: 16px;
+            font-weight: 600;
             color: #2c3e50;
-            font-size: 18px;
+        }
+
+        /* 链接列表样式 */
+        .links-list {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .link-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            align-items: flex-start;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            width: auto;
+        }
+
+        .link-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .link-content {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .link-favicon {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+        }
+
+        .link-info {
+            display: inline-block;
+        }
+
+        .link-title {
+            color: #2c3e50;
+            text-decoration: none;
+            font-weight: 500;
+            display: block;
+            margin-bottom: 4px;
+            white-space: nowrap;
+        }
+
+        .link-title:hover {
+            color: #007AFF;
+        }
+
+        .link-description {
+            color: #6c757d;
+            font-size: 14px;
+            margin-top: 4px;
+            white-space: nowrap;
+        }
+
+        .delete-button {
+            padding: 6px 12px;
+            background: white;
+            color: #dc3545;
+            border: 1px solid #dc3545;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            white-space: nowrap;
+            height: fit-content;
+        }
+
+        .delete-button:hover {
+            background: #dc3545;
+            color: white;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .links-list {
+                grid-template-columns: 1fr;
+            }
+            
+            .links-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .category-filter select {
+                width: 100%;
+            }
+        }
+
+        /* 响应式设计优化 */
+        @media (max-width: 1200px) {
+            .links-list {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 链接列表样式 */
+        .link-actions {
+            display: flex;
+            gap: 8px;
+            margin-left: 15px;
+        }
+
+        .edit-button {
+            padding: 6px 12px;
+            background: white;
+            color: #007AFF;
+            border: 1px solid #007AFF;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            white-space: nowrap;
+            height: fit-content;
+        }
+
+        .edit-button:hover {
+            background: #007AFF;
+            color: white;
+        }
+
+        /* 编辑对话框样式 */
+        .edit-dialog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .edit-dialog {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .edit-dialog-title {
+            font-size: 20px;
+            color: #2c3e50;
             margin-bottom: 20px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #f0f2f5;
+            font-weight: 600;
+        }
+
+        .edit-form-group {
+            margin-bottom: 15px;
+        }
+
+        .edit-form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .edit-form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .edit-dialog-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
-    <a href="#" class="back-button">←</a>
-    <h1>TC</h1>
+    <!-- 添加侧边栏 -->
+    <div class="sidebar">
+        <div class="sidebar-toggle" onclick="toggleSidebar()">
+            <i></i>
+        </div>
+        <ul class="category-nav" id="categoryNav">
+            <!-- 分类导航将通过 JavaScript 动态生成 -->
+        </ul>
+    </div>
 
-    <div class="search-container">
-        <input type="text" class="search-input" placeholder="输入搜索关键词...">
-        <div class="search-options">
-            <div class="radio-group">
-                <label class="radio-label">
-                    <input type="radio" name="search-engine" value="baidu" checked>
-                    百度
-                </label>
-                <label class="radio-label">
-                    <input type="radio" name="search-engine" value="google">
-                    Google
-                </label>
+    <div class="main-wrapper">
+        <h1>TC</h1>
+
+        <!-- 搜索区域 -->
+        <div class="search-container">
+            <input type="text" class="search-input" placeholder="输入搜索关键词...">
+            <div class="search-options">
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="search-engine" value="baidu" checked>
+                        百度
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="search-engine" value="google">
+                        Google
+                    </label>
+                </div>
+                <button class="search-button" onclick="search()">搜索</button>
             </div>
-            <button class="search-button" onclick="search()">搜索</button>
+        </div>
+
+        <!-- 主要内容区域 -->
+        <div class="content-grid">
+            <!-- 左侧链接列表 -->
+            <div class="links-section">
+                <div class="links-header">
+                    <h3 class="links-title">链接列表</h3>
+                    <div class="category-filter">
+                        <select id="linksCategorySelect" onchange="filterLinksByCategory(this.value)">
+                            <option value="all">显示所有分类</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="links-list-container"></div>
+            </div>
+
+            <!-- 右侧工具栏 -->
+            <div class="tools-section">
+                <!-- 添加分类 -->
+                <div class="section">
+                    <h2 class="section-title">添加新分类</h2>
+                    <div class="category-form">
+                        <input type="text" class="category-input" id="categoryInput" placeholder="请输入分类名称...">
+                        <button class="add-button" onclick="addCategory()">创建分类</button>
+                    </div>
+                </div>
+
+                <!-- 添加链接 -->
+                <div class="section">
+                    <h2 class="section-title">添加新链接</h2>
+                    <div class="link-form">
+                        <div class="form-group">
+                            <label for="categorySelect">选择分类</label>
+                            <select id="categorySelect">
+                                <option value="" disabled selected>请选择分类...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="titleInput">网站名称</label>
+                            <input type="text" id="titleInput" class="title-input" placeholder="请输入网站名称...">
+                        </div>
+                        <div class="form-group">
+                            <label for="urlInput">网站地址</label>
+                            <input type="url" id="urlInput" class="url-input" placeholder="请输入网站地址...">
+                        </div>
+                        <div class="form-group">
+                            <label for="descriptionInput">简短描述</label>
+                            <input type="text" id="descriptionInput" class="description-input" placeholder="请输入简短描述...">
+                        </div>
+                        <button class="add-link-button" onclick="addLink()">添加链接</button>
+                    </div>
+                </div>
+
+                <!-- 工具箱 -->
+                <div class="section">
+                    <h2 class="section-title">工具箱</h2>
+                    <div class="action-buttons">
+                        <button class="action-button" onclick="importLinks()">导入链接</button>
+                        <button class="action-button" onclick="exportLinks()">导出链接</button>
+                        <button class="action-button" onclick="checkLinks()">检查链接</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="section">
-        <h2 class="section-title">添加新分类</h2>
-        <input type="text" class="category-input" placeholder="请输入分类名称...">
-        <button class="add-button" onclick="addCategory()">创建分类</button>
-    </div>
-
-    <div class="section">
-        <h2 class="section-title">添加新链接</h2>
-        <div class="input-row">
-            <div class="input-group">
-                <label for="categorySelect">选择分类</label>
-                <select id="categorySelect">
-                    <option value="" disabled selected>请选择分类...</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <label for="titleInput">网站名称</label>
-                <input type="text" id="titleInput" class="title-input" placeholder="请输入网站名称...">
-            </div>
-        </div>
-        <div class="input-row">
-            <div class="input-group">
-                <label for="urlInput">网站地址</label>
-                <input type="url" id="urlInput" class="url-input" placeholder="请输入网站地址...">
-            </div>
-            <div class="input-group">
-                <label for="descriptionInput">简短描述</label>
-                <input type="text" id="descriptionInput" class="description-input" placeholder="请输入简短描述...">
-            </div>
-        </div>
-        <button class="add-link-button" onclick="addLink()">添加链接</button>
-    </div>
-
-    <div class="section">
-        <h2 class="section-title">最近访问</h2>
-        <div class="recent-links">
-            <input type="text" class="search-box" placeholder="搜索链接...">
-            <div class="action-buttons">
-                <button class="action-button" onclick="importLinks()">导入链接</button>
-                <button class="action-button" onclick="exportLinks()">导出链接</button>
-                <button class="action-button" onclick="checkLinks()">检查链接</button>
-            </div>
-        </div>
-    </div>
+    <!-- Toast 容器 -->
+    <div class="toast-container"></div>
 
     <script>
+        // 定义全局baseUrl
+        const baseUrl = 'http://localhost:3000';
+
         // 搜索功能
         function search() {
             const query = document.querySelector('.search-input').value;
@@ -553,35 +1240,72 @@
             window.open(baseUrl + encodeURIComponent(query), '_blank');
         }
 
-        // 添加分类
-        async function addCategory() {
-            const categoryInput = document.querySelector('.category-input');
-            const category = categoryInput.value.trim();
-            if (!category) {
-                alert('请输入分类名称');
-                return;
-            }
+        // Toast 提示函数
+        function showToast(message, type = 'success') {
+            const toastContainer = document.querySelector('.toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <span>${message}</span>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            // 3秒后自动消失
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease forwards';
+                setTimeout(() => {
+                    toastContainer.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
 
+        // 修改添加分类函数
+        async function addCategory() {
             try {
-                const response = await fetch('http://localhost:3000/api/categories', {
+                const categoryInput = document.getElementById('categoryInput');
+                if (!categoryInput) {
+                    throw new Error('找不到分类输入框元素');
+                }
+                const category = categoryInput.value.trim();
+                
+                if (!category) {
+                    alert('请输入分类名称');
+                    return;
+                }
+
+                console.log('正在发送请求到:', `${baseUrl}/api/categories`);
+                const response = await fetch(`${baseUrl}/api/categories`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify({ category })
                 });
+
+                console.log('服务器响应:', response);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('响应数据:', data);
+                
                 if (response.ok) {
                     categoryInput.value = '';
-                    await loadCategories(); // 重新加载分类列表
-                    alert('分类创建成功！');
+                    await loadCategories();
+                    await updateSidebarNav();
+                    showToast('分类创建成功！');
                 } else {
                     throw new Error('服务器响应错误');
                 }
             } catch (error) {
                 console.error('添加分类失败:', error);
-                alert('添加分类失败，请确保后端服务器已启动');
+                showToast('添加分类失败: ' + error.message, 'error');
             }
         }
 
-        // 添加链接
+        // 修改添加链接函数
         async function addLink() {
             const category = document.getElementById('categorySelect').value;
             const title = document.getElementById('titleInput').value.trim();
@@ -603,9 +1327,7 @@
 
             try {
                 console.log('正在添加链接:', { category, title, url, description });
-                const baseUrl = window.location.protocol === 'file:' 
-                    ? 'http://localhost:3000' 
-                    : '';
+                const baseUrl = 'http://localhost:3000';
                 const response = await fetch(`${baseUrl}/api/links`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -620,9 +1342,9 @@
                     document.getElementById('titleInput').value = '';
                     document.getElementById('urlInput').value = '';
                     document.getElementById('descriptionInput').value = '';
-                    console.log('正在重新加载分类:', category);
-                    await loadLinks(category);
-                    alert('链接添加成功！');
+                    const currentCategory = document.getElementById('linksCategorySelect').value;
+                    await filterLinksByCategory(currentCategory);
+                    showToast('链接添加成功！');
                 } else {
                     throw new Error(responseData.error || '添加链接失败');
                 }
@@ -636,9 +1358,7 @@
         async function loadCategories() {
             try {
                 console.log('开始加载分类...');
-                const baseUrl = window.location.protocol === 'file:' 
-                    ? 'http://localhost:3000' 
-                    : '';
+                const baseUrl = 'http://localhost:3000';
                 const response = await fetch(`${baseUrl}/api/categories`);
                 const categories = await response.json();
                 console.log('获取到的分类:', categories);
@@ -657,30 +1377,6 @@
                     option.textContent = category;
                     select.appendChild(option);
                 });
-
-                // 显示分类列表
-                const categoryList = document.createElement('div');
-                categoryList.className = 'category-list';
-                categoryList.innerHTML = '<h3>现有分类:</h3>';
-
-                const categoryItemsContainer = document.createElement('div');
-                categoryItemsContainer.className = 'category-items-container';
-
-                categories.forEach(category => {
-                    const categoryItem = document.createElement('div');
-                    categoryItem.className = 'category-item';
-                    categoryItem.textContent = category;
-                    categoryItemsContainer.appendChild(categoryItem);
-                });
-
-                categoryList.appendChild(categoryItemsContainer);
-
-                const addCategorySection = document.querySelector('.section');
-                if (addCategorySection.nextElementSibling) {
-                    addCategorySection.parentNode.insertBefore(categoryList, addCategorySection.nextElementSibling);
-                } else {
-                    addCategorySection.parentNode.appendChild(categoryList);
-                }
 
                 // 初始化时加载所有链接
                 await filterLinksByCategory('all');
@@ -761,9 +1457,7 @@
         // 加载指定分类的链接
         async function loadLinks(category = 'all') {
             console.log('加载链接, 分类:', category);
-            const baseUrl = window.location.protocol === 'file:' 
-                ? 'http://localhost:3000' 
-                : '';
+            const baseUrl = 'http://localhost:3000';
             
             try {
                 let response;
@@ -828,7 +1522,10 @@
                                     <div class="link-description">${link.description || ''}</div>
                                 </div>
                             </div>
-                            <button class="delete-button" onclick="deleteLink('${link._id}')">删除</button>
+                            <div class="link-actions">
+                                <button class="edit-button" onclick="editLink('${link.id}', '${link.title}', '${link.url}', '${link.description || ''}')">编辑</button>
+                                <button class="delete-button" onclick="deleteLink('${link.id}')">删除</button>
+                            </div>
                         `;
                         linksList.appendChild(linkItem);
                     });
@@ -848,23 +1545,24 @@
         // 修改显示链接列表函数
         async function displayLinks(links) {
             console.log('开始显示链接列表:', links);
-            const linksContainer = document.querySelector('.links-container') || createLinksContainer();
-            linksContainer.innerHTML = `
-                <div class="links-header">
-                    <h3 class="links-title">链接列表</h3>
-                    <div class="category-filter">
-                        <select id="linksCategorySelect" onchange="filterLinksByCategory(this.value)">
-                            <option value="all">显示所有分类</option>
-                        </select>
-                    </div>
-                </div>
-            `;
+            const linksListContainer = document.querySelector('.links-list-container');
+            linksListContainer.innerHTML = '';
+            
+            if (!links || links.length === 0) {
+                const emptyMessage = document.createElement('div');
+                emptyMessage.className = 'empty-message';
+                emptyMessage.textContent = '暂无链接';
+                linksListContainer.appendChild(emptyMessage);
+                return;
+            }
 
+            // 创建链接列表容器
+            const linksContainer = document.createElement('div');
+            linksContainer.className = 'links-container';
+            
             // 先获取所有可用分类
             try {
-                const baseUrl = window.location.protocol === 'file:' 
-                    ? 'http://localhost:3000' 
-                    : '';
+                const baseUrl = 'http://localhost:3000';
                 const categoriesResponse = await fetch(`${baseUrl}/api/categories`);
                 const allCategories = await categoriesResponse.json();
                 console.log('获取到所有分类:', allCategories);
@@ -881,20 +1579,6 @@
                 console.error('获取分类列表失败:', error);
             }
             
-            if (!links || links.length === 0) {
-                console.log('没有链接可显示');
-                const emptyMessage = document.createElement('div');
-                emptyMessage.className = 'empty-message';
-                emptyMessage.textContent = '暂无链接';
-                linksContainer.appendChild(emptyMessage);
-                return;
-            }
-
-            // 创建链接列表容器
-            const linksListContainer = document.createElement('div');
-            linksListContainer.className = 'links-list-container';
-            linksContainer.appendChild(linksListContainer);
-
             // 按分类组织链接
             const linksByCategory = {};
             links.forEach(link => {
@@ -911,14 +1595,19 @@
                 
                 const categoryTitle = document.createElement('h4');
                 categoryTitle.className = 'category-title';
-                categoryTitle.textContent = cat;
+                categoryTitle.innerHTML = `
+                    <span>${cat}</span>
+                    <button class="delete-category-button" onclick="deleteCategory('${cat}')">
+                        删除分类
+                    </button>
+                `;
                 categorySection.appendChild(categoryTitle);
 
                 const linksList = document.createElement('div');
                 linksList.className = 'links-list';
                 
+                // 先创建所有卡片
                 categoryLinks.forEach(link => {
-                    console.log('处理链接:', link);
                     const linkItem = document.createElement('div');
                     linkItem.className = 'link-item';
                     linkItem.innerHTML = `
@@ -929,22 +1618,42 @@
                                 <div class="link-description">${link.description || ''}</div>
                             </div>
                         </div>
-                        <button class="delete-button" onclick="deleteLink('${link._id}')">删除</button>
+                        <div class="link-actions">
+                            <button class="edit-button" onclick="editLink('${link.id}', '${link.title}', '${link.url}', '${link.description || ''}')">编辑</button>
+                            <button class="delete-button" onclick="deleteLink('${link.id}')">删除</button>
+                        </div>
                     `;
                     linksList.appendChild(linkItem);
                 });
                 
                 categorySection.appendChild(linksList);
-                linksListContainer.appendChild(categorySection);
+                linksContainer.appendChild(categorySection);
             });
+
+            // 将链接列表添加到section内部的最后
+            const addLinkSection = document.querySelector('.section:has(.link-form)');
+            if (!addLinkSection) {
+                console.log('尝试查找第二个section');
+                const sections = document.querySelectorAll('.section');
+                if (sections.length >= 2) {
+                    sections[1].appendChild(linksContainer);
+                    console.log('链接容器已添加到第二个section');
+                    return;
+                }
+                console.error('未找到合适的section');
+                document.body.appendChild(linksContainer);
+                return;
+            }
+            
+            // 将链接列表添加到section内部的最后
+            addLinkSection.appendChild(linksContainer);
+            console.log('链接容器创建完成');
         }
 
         // 根据分类筛选显示链接
         async function filterLinksByCategory(category) {
             console.log('筛选分类:', category);
-            const baseUrl = window.location.protocol === 'file:' 
-                ? 'http://localhost:3000' 
-                : '';
+            const baseUrl = 'http://localhost:3000';
             
             try {
                 let response;
@@ -963,47 +1672,31 @@
                 const links = await response.json();
                 console.log('获取到的链接数量:', links.length);
 
-                // 创建或获取链接容器
-                const linksContainer = document.querySelector('.links-container') || createLinksContainer();
-                
-                // 如果还没有创建链接列表头部，则创建它
-                if (!document.querySelector('.links-header')) {
-                    linksContainer.innerHTML = `
-                        <div class="links-header">
-                            <h3 class="links-title">链接列表</h3>
-                            <div class="category-filter">
-                                <select id="linksCategorySelect" onchange="filterLinksByCategory(this.value)">
-                                    <option value="all">显示所有分类</option>
-                                </select>
-                            </div>
-                        </div>
-                    `;
+                // 更新分类选择器
+                const categorySelect = document.getElementById('linksCategorySelect');
+                if (categorySelect) {
+                    // 保存当前选中的值
+                    const currentValue = category;
+                    
+                    // 清空现有选项，但保留"显示所有分类"选项
+                    categorySelect.innerHTML = '<option value="all">显示所有分类</option>';
 
                     // 获取并填充所有分类
                     const categoriesResponse = await fetch(`${baseUrl}/api/categories`);
                     const allCategories = await categoriesResponse.json();
-                    const categorySelect = document.getElementById('linksCategorySelect');
                     allCategories.sort().forEach(cat => {
                         const option = document.createElement('option');
                         option.value = cat;
                         option.textContent = cat;
                         categorySelect.appendChild(option);
                     });
+
+                    // 恢复选中的值
+                    categorySelect.value = currentValue;
                 }
 
-                // 设置当前选中的分类
-                const categorySelect = document.getElementById('linksCategorySelect');
-                if (categorySelect) {
-                    categorySelect.value = category;
-                }
-
-                // 创建或清空链接列表容器
-                let linksListContainer = document.querySelector('.links-list-container');
-                if (!linksListContainer) {
-                    linksListContainer = document.createElement('div');
-                    linksListContainer.className = 'links-list-container';
-                    linksContainer.appendChild(linksListContainer);
-                }
+                // 使用固定的链接列表容器
+                const linksListContainer = document.querySelector('.links-list-container');
                 linksListContainer.innerHTML = '';
 
                 if (links.length === 0) {
@@ -1030,7 +1723,12 @@
                     
                     const categoryTitle = document.createElement('h4');
                     categoryTitle.className = 'category-title';
-                    categoryTitle.textContent = cat;
+                    categoryTitle.innerHTML = `
+                        <span>${cat}</span>
+                        <button class="delete-category-button" onclick="deleteCategory('${cat}')">
+                            删除分类
+                        </button>
+                    `;
                     categorySection.appendChild(categoryTitle);
 
                     const linksList = document.createElement('div');
@@ -1048,7 +1746,10 @@
                                     <div class="link-description">${link.description || ''}</div>
                                 </div>
                             </div>
-                            <button class="delete-button" onclick="deleteLink('${link._id}')">删除</button>
+                            <div class="link-actions">
+                                <button class="edit-button" onclick="editLink('${link.id}', '${link.title}', '${link.url}', '${link.description || ''}')">编辑</button>
+                                <button class="delete-button" onclick="deleteLink('${link.id}')">删除</button>
+                            </div>
                         `;
                         linksList.appendChild(linkItem);
                     });
@@ -1097,9 +1798,7 @@
 
             try {
                 console.log('正在删除链接:', linkId);
-                const baseUrl = window.location.protocol === 'file:' 
-                    ? 'http://localhost:3000' 
-                    : '';
+                const baseUrl = 'http://localhost:3000';
                 const response = await fetch(`${baseUrl}/api/links/${linkId}`, {
                     method: 'DELETE'
                 });
@@ -1112,13 +1811,13 @@
                     
                     // 重新加载链接
                     await filterLinksByCategory(displayCategory);
-                    alert('链接删除成功！');
+                    showToast('链接删除成功！');
                 } else {
                     throw new Error('删除失败: ' + response.statusText);
                 }
             } catch (error) {
                 console.error('删除链接失败:', error);
-                alert('删除链接失败: ' + error.message);
+                showToast('删除链接失败: ' + error.message, 'error');
             }
         }
 
@@ -1133,9 +1832,7 @@
                 
                 // 如果当前显示"所有分类"，则获取所有链接
                 if (displayCategory === 'all') {
-                    const baseUrl = window.location.protocol === 'file:' 
-                        ? 'http://localhost:3000' 
-                        : '';
+                    const baseUrl = 'http://localhost:3000';
                     try {
                         const response = await fetch(`${baseUrl}/api/links/all`);
                         const links = await response.json();
@@ -1211,6 +1908,9 @@
                 margin-bottom: 15px;
                 padding-bottom: 10px;
                 border-bottom: 2px solid #f0f0f0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
             }
         `;
 
@@ -1218,6 +1918,208 @@
         const styleSheet = document.createElement('style');
         styleSheet.textContent = categoryStyles;
         document.head.appendChild(styleSheet);
+
+        // 显示确认对话框的函数
+        function showConfirmDialog(message, onConfirm) {
+            const overlay = document.createElement('div');
+            overlay.className = 'confirm-dialog-overlay';
+            
+            overlay.innerHTML = `
+                <div class="confirm-dialog">
+                    <div class="confirm-dialog-title">确认删除</div>
+                    <div class="confirm-dialog-message">${message}</div>
+                    <div class="confirm-dialog-buttons">
+                        <button class="confirm-dialog-button confirm-dialog-cancel">取消</button>
+                        <button class="confirm-dialog-button confirm-dialog-confirm">确认删除</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            
+            // 绑定事件
+            const cancelButton = overlay.querySelector('.confirm-dialog-cancel');
+            const confirmButton = overlay.querySelector('.confirm-dialog-confirm');
+            
+            cancelButton.onclick = () => {
+                document.body.removeChild(overlay);
+            };
+            
+            confirmButton.onclick = () => {
+                onConfirm();
+                document.body.removeChild(overlay);
+            };
+        }
+
+        // 修改删除分类函数
+        async function deleteCategory(category) {
+            showConfirmDialog(`确定要删除分类"${category}"及其所有链接吗？`, async () => {
+                try {
+                    const response = await fetch(`${baseUrl}/api/categories/${encodeURIComponent(category)}`, {
+                        method: 'DELETE'
+                    });
+
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        await loadCategories();
+                        await filterLinksByCategory('all');
+                        await updateSidebarNav();
+                        showToast('分类删除成功！');
+                    } else {
+                        throw new Error(data.error || '删除分类失败');
+                    }
+                } catch (error) {
+                    console.error('删除分类失败:', error);
+                    showToast('删除分类失败: ' + error.message, 'error');
+                }
+            });
+        }
+
+        // 更新侧边栏导航
+        async function updateSidebarNav() {
+            const nav = document.getElementById('categoryNav');
+            nav.innerHTML = ''; // 清空现有内容
+
+            try {
+                const response = await fetch(`${baseUrl}/api/categories`);
+                const categories = await response.json();
+
+                categories.forEach(category => {
+                    const li = document.createElement('li');
+                    li.className = 'category-nav-item';
+                    li.innerHTML = `
+                        <div class="category-nav-header">
+                            <span class="category-nav-toggle">▶</span>
+                            <span>${category}</span>
+                        </div>
+                        <div class="category-nav-links">
+                            <!-- 链接将在点击展开时动态加载 -->
+                        </div>
+                    `;
+
+                    const header = li.querySelector('.category-nav-header');
+                    const toggle = li.querySelector('.category-nav-toggle');
+                    const linksContainer = li.querySelector('.category-nav-links');
+                    let linksLoaded = false;
+
+                    header.addEventListener('click', async () => {
+                        const isExpanded = toggle.classList.contains('expanded');
+                        
+                        if (!isExpanded && !linksLoaded) {
+                            // 加载该分类下的链接
+                            const linksResponse = await fetch(`${baseUrl}/api/links/${encodeURIComponent(category)}`);
+                            const links = await linksResponse.json();
+                            
+                            linksContainer.innerHTML = links.map(link => `
+                                <a href="${link.url}" class="category-nav-link" target="_blank">
+                                    ${link.title}
+                                </a>
+                            `).join('');
+                            
+                            linksLoaded = true;
+                        }
+
+                        toggle.classList.toggle('expanded');
+                        linksContainer.classList.toggle('expanded');
+                        header.classList.toggle('active');
+                    });
+
+                    nav.appendChild(li);
+                });
+            } catch (error) {
+                console.error('加载分类导航失败:', error);
+            }
+        }
+
+        // 在加载分类和添加/删除分类后调用
+        document.addEventListener('DOMContentLoaded', updateSidebarNav);
+
+        // 添加侧边栏收缩功能
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const body = document.body;
+            const toggle = document.querySelector('.sidebar-toggle i');
+            
+            sidebar.classList.toggle('collapsed');
+            body.classList.toggle('sidebar-collapsed');
+            
+            // 更新CSS变量
+            document.documentElement.style.setProperty(
+                '--sidebar-width',
+                sidebar.classList.contains('collapsed') ? '60px' : '250px'
+            );
+            
+            // 更新箭头方向
+            toggle.style.transform = sidebar.classList.contains('collapsed') 
+                ? 'rotate(-45deg)' 
+                : 'rotate(135deg)';
+        }
+
+        // 初始化箭头方向
+        document.querySelector('.sidebar-toggle i').style.transform = 'rotate(135deg)';
+
+        // 编辑链接函数
+        async function editLink(id, title, url, description) {
+            const overlay = document.createElement('div');
+            overlay.className = 'edit-dialog-overlay';
+            
+            overlay.innerHTML = `
+                <div class="edit-dialog">
+                    <div class="edit-dialog-title">编辑链接</div>
+                    <div class="edit-form-group">
+                        <label for="editTitle">网站名称</label>
+                        <input type="text" id="editTitle" value="${title}">
+                    </div>
+                    <div class="edit-form-group">
+                        <label for="editUrl">网站地址</label>
+                        <input type="url" id="editUrl" value="${url}">
+                    </div>
+                    <div class="edit-form-group">
+                        <label for="editDescription">简短描述</label>
+                        <input type="text" id="editDescription" value="${description}">
+                    </div>
+                    <div class="edit-dialog-buttons">
+                        <button class="confirm-dialog-button confirm-dialog-cancel" onclick="this.closest('.edit-dialog-overlay').remove()">取消</button>
+                        <button class="confirm-dialog-button confirm-dialog-confirm" onclick="updateLink('${id}')">保存</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+        }
+
+        // 更新链接函数
+        async function updateLink(id) {
+            const title = document.getElementById('editTitle').value.trim();
+            const url = document.getElementById('editUrl').value.trim();
+            const description = document.getElementById('editDescription').value.trim();
+
+            if (!title || !url) {
+                showToast('网站名称和地址不能为空', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${baseUrl}/api/links/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, url, description })
+                });
+
+                if (response.ok) {
+                    document.querySelector('.edit-dialog-overlay').remove();
+                    const currentCategory = document.getElementById('linksCategorySelect').value;
+                    await filterLinksByCategory(currentCategory);
+                    showToast('链接更新成功！');
+                } else {
+                    throw new Error('更新失败');
+                }
+            } catch (error) {
+                console.error('更新链接失败:', error);
+                showToast('更新链接失败: ' + error.message, 'error');
+            }
+        }
     </script>
 </body>
 </html> 

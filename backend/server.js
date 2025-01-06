@@ -1,76 +1,56 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const axios = require('axios');
 const cheerio = require('cheerio');
 const cron = require('node-cron');
+const mysql = require('mysql2/promise'); // 使用promise版本
 const Link = require('./models/Link');
+
+// 数据库连接配置
+const dbConfig = {
+    host: process.env.MYSQL_HOST || '159.75.107.196',
+    user: process.env.MYSQL_USER || 'root',
+    password: process.env.MYSQL_PASSWORD || 'debezium',
+    database: process.env.MYSQL_DATABASE || 'nav_website'
+};
+
+// 创建数据库连接池
+const pool = mysql.createPool(dbConfig);
+
+// 测试数据库连接
+async function testConnection() {
+    try {
+        const connection = await pool.getConnection();
+        console.log('数据库连接成功');
+        connection.release();
+    } catch (error) {
+        console.error('数据库连接失败:', error);
+    }
+}
+
+testConnection();
 
 const app = express();
 
 // 配置CORS
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:5500', 'null'],
+    origin: '*',
     methods: ['GET', 'POST', 'DELETE', 'UPDATE', 'PUT', 'PATCH'],
     credentials: true
 }));
 
 app.use(express.json());
 
-// 连接MongoDB
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://liyuhao658:PndF4hROA11U7lZC@cluster0.srgfy.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-
-mongoose.connect(MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}).then(() => {
-    console.log('MongoDB连接成功');
-}).catch(err => {
-    console.error('MongoDB连接失败:', err);
-});
-
 // 获取所有分类
 app.get('/api/categories', async (req, res) => {
     try {
-        console.log('收到获取分类请求');
-        const categories = await Link.distinct('category');
-        console.log('数据库中的分类:', categories);
+        const [rows] = await pool.query(
+            'SELECT DISTINCT category FROM links'
+        );
+        const categories = rows.map(row => row.category);
         res.json(categories);
     } catch (error) {
-        console.error('获取分类失败:', error);
         res.status(500).json({ error: '获取分类失败' });
-    }
-});
-
-// 获取所有链接
-app.get('/api/all-links', async (req, res) => {
-    try {
-        console.log('收到获取所有链接请求');
-        const links = await Link.find();
-        console.log('数据库查询完成');
-        console.log('找到的链接数量:', links.length);
-        console.log('链接列表:', JSON.stringify(links, null, 2));
-        res.json(links);
-    } catch (error) {
-        console.error('获取所有链接失败:', error);
-        res.status(500).json({ error: '获取所有链接失败' });
-    }
-});
-
-// 获取指定分类的所有链接
-app.get('/api/links/:category', async (req, res) => {
-    try {
-        const category = req.params.category;
-        console.log('收到获取链接请求, 分类:', category);
-        
-        const links = await Link.find({ category: category });
-        console.log('找到的链接数量:', links.length);
-        console.log('链接列表:', JSON.stringify(links, null, 2));
-        
-        res.json(links);
-    } catch (error) {
-        console.error('获取链接失败:', error);
-        res.status(500).json({ error: '获取链接失败' });
     }
 });
 
@@ -78,22 +58,54 @@ app.get('/api/links/:category', async (req, res) => {
 app.post('/api/categories', async (req, res) => {
     try {
         const { category } = req.body;
-        const existingCategory = await Link.findOne({ category });
-        if (existingCategory) {
-            return res.status(400).json({ error: '分类已存在' });
+        
+        if (!category) {
+            return res.status(400).json({ error: '分类名称不能为空' });
         }
-        // 创建一个新的分类文档
-        const newLink = new Link({ 
-            category,
-            title: category,  // 使用分类名作为标题
-            url: '#',         // 使用占位符URL
-            description: `${category}分类` // 添加描述
-        });
-        await newLink.save();
-        res.json({ message: '分类添加成功' });
+        
+        // 检查分类是否已存在
+        const [existing] = await pool.query(
+            'SELECT category FROM links WHERE category = ? LIMIT 1',
+            [category]
+        );
+        
+        if (existing.length > 0) {
+            return res.status(400).json({ error: '该分类已存在' });
+        }
+        
+        // 创建一个空链接来保存新分类
+        const [result] = await pool.query(
+            'INSERT INTO links (id, category, title, url) VALUES (?, ?, ?, ?)',
+            [Date.now().toString(), category, '分类占位', 'http://example.com']
+        );
+        
+        res.json({ message: '分类添加成功', category });
     } catch (error) {
         console.error('添加分类失败:', error);
         res.status(500).json({ error: '添加分类失败' });
+    }
+});
+
+// 获取所有链接
+app.get('/api/all-links', async (req, res) => {
+    try {
+        const [rows] = await pool.query('SELECT * FROM links');
+        res.json(rows);
+    } catch (error) {
+        res.status(500).json({ error: '获取所有链接失败' });
+    }
+});
+
+// 获取指定分类的所有链接
+app.get('/api/links/:category', async (req, res) => {
+    try {
+        const [rows] = await pool.query(
+            'SELECT * FROM links WHERE category = ?',
+            [req.params.category]
+        );
+        res.json(rows);
+    } catch (error) {
+        res.status(500).json({ error: '获取链接失败' });
     }
 });
 
@@ -101,48 +113,37 @@ app.post('/api/categories', async (req, res) => {
 app.post('/api/links', async (req, res) => {
     try {
         const { category, title, url, description } = req.body;
-        console.log('收到添加链接请求:', { category, title, url, description });
         
-        // 验证必填字段
         if (!category || !title || !url) {
-            console.log('缺少必填字段');
             return res.status(400).json({ error: '分类、标题和URL为必填项' });
         }
 
-        // 格式化URL
         let formattedUrl = url;
         if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
             formattedUrl = 'https://' + formattedUrl;
         }
 
-        // 验证URL格式
         try {
             new URL(formattedUrl);
         } catch (error) {
-            console.log('无效的URL格式:', formattedUrl);
             return res.status(400).json({ error: '无效的URL格式' });
         }
         
-        // 获取网站favicon
         const favicon = await getFavicon(formattedUrl);
-        console.log('获取到的favicon:', favicon);
+        const id = Date.now().toString(); // 生成一个ID并保存下来重用
         
-        const newLink = new Link({
-            category,
-            title,
-            url: formattedUrl,
-            description,
-            favicon,
-            lastVisited: null,
-            visitCount: 0
-        });
+        const [result] = await pool.query(
+            'INSERT INTO links (id, category, title, url, description, favicon) VALUES (?, ?, ?, ?, ?, ?)',
+            [id, category, title, formattedUrl, description, favicon]
+        );
         
-        console.log('准备保存新链接:', newLink);
-        await newLink.save();
-        console.log('新链接保存成功');
-        res.json({ message: '链接添加成功', link: newLink });
+        const [newLink] = await pool.query(
+            'SELECT * FROM links WHERE id = ?',
+            [id]  // 使用保存的ID
+        );
+        
+        res.json({ message: '链接添加成功', link: newLink[0] });
     } catch (error) {
-        console.error('添加链接失败:', error);
         res.status(500).json({ error: '添加链接失败' });
     }
 });
@@ -150,21 +151,17 @@ app.post('/api/links', async (req, res) => {
 // 删除链接
 app.delete('/api/links/:id', async (req, res) => {
     try {
-        const linkId = req.params.id;
-        console.log('收到删除链接请求, ID:', linkId);
+        const [result] = await pool.query(
+            'DELETE FROM links WHERE id = ?',
+            [req.params.id]
+        );
         
-        const result = await Link.findByIdAndDelete(linkId);
-        console.log('删除结果:', result);
-        
-        if (!result) {
-            console.log('链接不存在');
+        if (result.affectedRows === 0) {
             return res.status(404).json({ error: '链接不存在' });
         }
         
-        console.log('链接删除成功');
         res.json({ message: '链接删除成功' });
     } catch (error) {
-        console.error('删除链接失败:', error);
         res.status(500).json({ error: '删除链接失败' });
     }
 });
@@ -172,12 +169,11 @@ app.delete('/api/links/:id', async (req, res) => {
 // 获取最近访问记录
 app.get('/api/recent-visits', async (req, res) => {
     try {
-        const recentLinks = await Link.find({ lastVisited: { $ne: null } })
-            .sort({ lastVisited: -1 })
-            .limit(10);
-        res.json(recentLinks);
+        const [rows] = await pool.query(
+            'SELECT * FROM links WHERE lastVisited IS NOT NULL ORDER BY lastVisited DESC LIMIT 10'
+        );
+        res.json(rows);
     } catch (error) {
-        console.error('获取最近访问记录失败:', error);
         res.status(500).json({ error: '获取最近访问记录失败' });
     }
 });
@@ -185,18 +181,17 @@ app.get('/api/recent-visits', async (req, res) => {
 // 更新访问记录
 app.post('/api/visit/:id', async (req, res) => {
     try {
-        const link = await Link.findById(req.params.id);
-        if (!link) {
+        const [result] = await pool.query(
+            'UPDATE links SET lastVisited = NOW(), visitCount = visitCount + 1 WHERE id = ?',
+            [req.params.id]
+        );
+        
+        if (result.affectedRows === 0) {
             return res.status(404).json({ error: '链接不存在' });
         }
         
-        link.lastVisited = new Date();
-        link.visitCount += 1;
-        await link.save();
-        
         res.json({ message: '访问记录更新成功' });
     } catch (error) {
-        console.error('更新访问记录失败:', error);
         res.status(500).json({ error: '更新访问记录失败' });
     }
 });
@@ -205,17 +200,12 @@ app.post('/api/visit/:id', async (req, res) => {
 app.get('/api/search', async (req, res) => {
     try {
         const { q } = req.query;
-        const regex = new RegExp(q, 'i');
-        const links = await Link.find({
-            $or: [
-                { title: regex },
-                { description: regex },
-                { category: regex }
-            ]
-        }).limit(10);
-        res.json(links);
+        const [rows] = await pool.query(
+            'SELECT * FROM links WHERE title LIKE ? OR description LIKE ? OR category LIKE ?',
+            [`%${q}%`, `%${q}%`, `%${q}%`]
+        );
+        res.json(rows);
     } catch (error) {
-        console.error('搜索失败:', error);
         res.status(500).json({ error: '搜索失败' });
     }
 });
@@ -227,7 +217,6 @@ app.get('/api/preview', async (req, res) => {
         const preview = await getWebsitePreview(url);
         res.json(preview);
     } catch (error) {
-        console.error('获取链接预览失败:', error);
         res.status(500).json({ error: '获取链接预览失败' });
     }
 });
@@ -238,17 +227,13 @@ app.post('/api/import', async (req, res) => {
         const { links } = req.body;
         for (const link of links) {
             const favicon = await getFavicon(link.url);
-            const newLink = new Link({
-                ...link,
-                favicon,
-                lastVisited: null,
-                visitCount: 0
-            });
-            await newLink.save();
+            await pool.query(
+                'INSERT INTO links (id, category, title, url, description, favicon) VALUES (?, ?, ?, ?, ?, ?)',
+                [Date.now().toString(), link.category, link.title, link.url, link.description, favicon]
+            );
         }
         res.json({ message: '链接导入成功' });
     } catch (error) {
-        console.error('导入链接失败:', error);
         res.status(500).json({ error: '导入链接失败' });
     }
 });
@@ -256,10 +241,9 @@ app.post('/api/import', async (req, res) => {
 // 导出链接
 app.get('/api/export', async (req, res) => {
     try {
-        const links = await Link.find({}, { _id: 0, __v: 0 });
-        res.json(links);
+        const [rows] = await pool.query('SELECT * FROM links');
+        res.json(rows);
     } catch (error) {
-        console.error('导出链接失败:', error);
         res.status(500).json({ error: '导出链接失败' });
     }
 });
@@ -271,7 +255,6 @@ app.post('/api/check-links', async (req, res) => {
         checkAllLinks();
         res.json({ message: '链接检查已开始' });
     } catch (error) {
-        console.error('检查链接失败:', error);
         res.status(500).json({ error: '检查链接失败' });
     }
 });
@@ -287,7 +270,7 @@ async function getFavicon(url) {
         try {
             new URL(url); // 验证URL是否有效
         } catch (error) {
-            console.error('无效的URL:', url);
+            // 静默处理无效URL
             return null;
         }
 
@@ -317,15 +300,15 @@ async function getFavicon(url) {
                 await axios.head(favicon);
                 return favicon;
             } catch (error) {
-                console.error('Favicon不可访问:', favicon);
+                // 静默处理不可访问的favicon
                 return null;
             }
         } catch (error) {
-            console.error('获取页面内容失败:', error.message);
+            // 静默处理页面内容获取失败
             return null;
         }
     } catch (error) {
-        console.error('获取favicon失败:', error.message);
+        // 静默处理所有其他错误
         return null;
     }
 }
@@ -343,7 +326,7 @@ async function getWebsitePreview(url) {
             url
         };
     } catch (error) {
-        console.error('获取网站预览失败:', error);
+        // 静默处理错误，返回默认值
         return {
             title: '',
             description: '',
@@ -356,15 +339,20 @@ async function getWebsitePreview(url) {
 // 辅助函数：检查所有链接的有效性
 async function checkAllLinks() {
     try {
-        const links = await Link.find();
-        for (const link of links) {
+        const [rows] = await pool.query('SELECT id, url FROM links');
+        for (const link of rows) {
             try {
                 await axios.head(link.url);
-                link.isValid = true;
+                await pool.query(
+                    'UPDATE links SET isValid = true WHERE id = ?',
+                    [link.id]
+                );
             } catch (error) {
-                link.isValid = false;
+                await pool.query(
+                    'UPDATE links SET isValid = false WHERE id = ?',
+                    [link.id]
+                );
             }
-            await link.save();
         }
     } catch (error) {
         console.error('检查链接失败:', error);
@@ -374,6 +362,79 @@ async function checkAllLinks() {
 // 定时任务：每天凌晨2点检查链接有效性
 cron.schedule('0 2 * * *', () => {
     checkAllLinks();
+});
+
+// 添加在其他路由之前
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', message: '服务器正常运行' });
+});
+
+// 删除分类
+app.delete('/api/categories/:category', async (req, res) => {
+    try {
+        const category = req.params.category;
+        
+        // 先检查分类是否存在
+        const [existing] = await pool.query(
+            'SELECT category FROM links WHERE category = ? LIMIT 1',
+            [category]
+        );
+        
+        if (existing.length === 0) {
+            return res.status(404).json({ error: '分类不存在' });
+        }
+        
+        // 删除该分类下的所有链接
+        const [result] = await pool.query(
+            'DELETE FROM links WHERE category = ?',
+            [category]
+        );
+        
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: '删除分类失败：没有找到相关记录' });
+        }
+        
+        res.json({ message: '分类删除成功' });
+    } catch (error) {
+        console.error('删除分类失败:', error);
+        res.status(500).json({ 
+            error: '删除分类失败',
+            details: error.message 
+        });
+    }
+});
+
+// 更新链接
+app.put('/api/links/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { title, url, description } = req.body;
+        
+        if (!title || !url) {
+            return res.status(400).json({ error: '网站名称和地址不能为空' });
+        }
+        
+        // 验证链接是否存在
+        const [existing] = await pool.query(
+            'SELECT id FROM links WHERE id = ?',
+            [id]
+        );
+        
+        if (existing.length === 0) {
+            return res.status(404).json({ error: '链接不存在' });
+        }
+        
+        const success = await Link.update(id, { title, url, description });
+        
+        if (success) {
+            res.json({ message: '链接更新成功' });
+        } else {
+            res.status(404).json({ error: '链接不存在' });
+        }
+    } catch (error) {
+        console.error('更新链接失败:', error);
+        res.status(500).json({ error: '服务器错误' });
+    }
 });
 
 const port = process.env.PORT || 3000;

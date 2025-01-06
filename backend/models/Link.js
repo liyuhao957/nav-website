@@ -1,60 +1,26 @@
-const mongoose = require('mongoose');
+const mysql = require('mysql2/promise');
 
-const linkSchema = new mongoose.Schema({
-    category: {
-        type: String,
-        required: true,
-        trim: true
-    },
-    title: {
-        type: String,
-        required: true,
-        trim: true
-    },
-    url: {
-        type: String,
-        required: true,
-        trim: true
-    },
-    description: {
-        type: String,
-        trim: true
-    },
-    favicon: {
-        type: String,
-        trim: true
-    },
-    lastVisited: {
-        type: Date,
-        default: null
-    },
-    visitCount: {
-        type: Number,
-        default: 0
-    },
-    isValid: {
-        type: Boolean,
-        default: true
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    },
-    updatedAt: {
-        type: Date,
-        default: Date.now
+class Link {
+    static async update(id, { title, url, description }) {
+        const connection = await mysql.createConnection({
+            host: process.env.MYSQL_HOST || '159.75.107.196',
+            user: process.env.MYSQL_USER || 'root',
+            password: process.env.MYSQL_PASSWORD || 'debezium',
+            database: process.env.MYSQL_DATABASE || 'nav_website'
+        });
+        try {
+            const [result] = await connection.execute(
+                'UPDATE links SET title = ?, url = ?, description = ? WHERE id = ?',
+                [title, url, description, id]
+            );
+            return result.affectedRows > 0;
+        } catch (error) {
+            console.error('Error updating link:', error);
+            throw error;
+        } finally {
+            await connection.end();
+        }
     }
-}, {
-    timestamps: true
-});
+}
 
-// 添加索引以提高搜索性能
-linkSchema.index({ title: 'text', description: 'text', category: 'text' });
-
-// 更新updatedAt字段的中间件
-linkSchema.pre('save', function(next) {
-    this.updatedAt = new Date();
-    next();
-});
-
-module.exports = mongoose.model('Link', linkSchema); 
+module.exports = Link; 
