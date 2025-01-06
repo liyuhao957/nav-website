@@ -118,11 +118,12 @@
         }
 
         .section {
+            animation: fadeIn 0.5s ease-out;
+            padding: 20px;
             background: white;
-            padding: 30px;
             border-radius: 15px;
-            margin-bottom: 30px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
         }
 
         .section-title {
@@ -272,65 +273,113 @@
             font-size: 20px;
         }
 
+        .category-items-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
         .category-item {
-            padding: 10px 15px;
-            margin: 5px 0;
+            padding: 8px 16px;
             background: #f8f9fa;
-            border-radius: 8px;
+            border-radius: 20px;
             color: #2c3e50;
-            font-size: 16px;
+            font-size: 14px;
             transition: all 0.3s ease;
+            border: 1px solid #e9ecef;
+            cursor: pointer;
         }
 
         .category-item:hover {
-            background: #e9ecef;
-            transform: translateX(5px);
+            background: #007AFF;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 4px rgba(0, 122, 255, 0.2);
         }
 
         .links-container {
             margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
         }
+
+        .category-section {
+            flex: 1;
+            min-width: 300px;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .category-section h3 {
+            color: #2c3e50;
+            font-size: 18px;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #f0f2f5;
+        }
+
+        .links-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
         .link-item {
+            flex: 1;
+            min-width: 300px;
+            max-width: calc(50% - 15px);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px;
-            margin: 10px 0;
+            padding: 12px;
             background: #f8f9fa;
             border-radius: 8px;
             transition: all 0.3s ease;
         }
+
         .link-item:hover {
             background: #e9ecef;
-            transform: translateX(5px);
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
+
         .link-content {
             display: flex;
             align-items: center;
             gap: 15px;
         }
+
         .link-favicon {
             width: 24px;
             height: 24px;
             border-radius: 4px;
         }
+
         .link-info {
             flex-grow: 1;
         }
+
         .link-title {
             color: #2c3e50;
             text-decoration: none;
             font-weight: 500;
             font-size: 16px;
         }
+
         .link-title:hover {
             color: #007AFF;
         }
+
         .link-description {
             color: #6c757d;
             font-size: 14px;
             margin-top: 4px;
         }
+
         .delete-button {
             padding: 8px 15px;
             background-color: #dc3545;
@@ -341,14 +390,91 @@
             font-size: 14px;
             transition: all 0.3s ease;
         }
+
         .delete-button:hover {
             background-color: #c82333;
         }
+
         .empty-message {
             color: #6c757d;
             text-align: center;
             padding: 20px;
             font-style: italic;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .input-group {
+            flex: 1;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+
+        #categorySelect, .title-input, .url-input, .description-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        #categorySelect:focus, 
+        .title-input:focus, 
+        .url-input:focus, 
+        .description-input:focus {
+            outline: none;
+            border-color: #007AFF;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        .add-link-button {
+            background-color: #007AFF;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            width: fit-content;
+        }
+
+        .add-link-button:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 122, 255, 0.2);
+        }
+
+        .category-section {
+            flex: 1;
+            min-width: 100%;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .category-section h3 {
+            color: #2c3e50;
+            font-size: 18px;
+            margin-bottom: 20px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #f0f2f5;
         }
     </style>
 </head>
@@ -381,27 +507,29 @@
 
     <div class="section">
         <h2 class="section-title">添加新链接</h2>
-        <div class="link-form">
-            <div class="form-group">
-                <label>选择分类</label>
+        <div class="input-row">
+            <div class="input-group">
+                <label for="categorySelect">选择分类</label>
                 <select id="categorySelect">
                     <option value="" disabled selected>请选择分类...</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label>网站名称</label>
-                <input type="text" id="titleInput" placeholder="请输入网站名称">
+            <div class="input-group">
+                <label for="titleInput">网站名称</label>
+                <input type="text" id="titleInput" class="title-input" placeholder="请输入网站名称...">
             </div>
-            <div class="form-group">
-                <label>网站地址</label>
-                <input type="text" id="urlInput" placeholder="请输入网站地址">
-            </div>
-            <div class="form-group">
-                <label>简短描述</label>
-                <input type="text" id="descriptionInput" placeholder="请输入简短描述">
-            </div>
-            <button class="add-button" onclick="addLink()">添加链接</button>
         </div>
+        <div class="input-row">
+            <div class="input-group">
+                <label for="urlInput">网站地址</label>
+                <input type="url" id="urlInput" class="url-input" placeholder="请输入网站地址...">
+            </div>
+            <div class="input-group">
+                <label for="descriptionInput">简短描述</label>
+                <input type="text" id="descriptionInput" class="description-input" placeholder="请输入简短描述...">
+            </div>
+        </div>
+        <button class="add-link-button" onclick="addLink()">添加链接</button>
     </div>
 
     <div class="section">
@@ -534,13 +662,19 @@
                 const categoryList = document.createElement('div');
                 categoryList.className = 'category-list';
                 categoryList.innerHTML = '<h3>现有分类:</h3>';
+
+                const categoryItemsContainer = document.createElement('div');
+                categoryItemsContainer.className = 'category-items-container';
+
                 categories.forEach(category => {
                     const categoryItem = document.createElement('div');
                     categoryItem.className = 'category-item';
                     categoryItem.textContent = category;
-                    categoryList.appendChild(categoryItem);
+                    categoryItemsContainer.appendChild(categoryItem);
                 });
-                
+
+                categoryList.appendChild(categoryItemsContainer);
+
                 const addCategorySection = document.querySelector('.section');
                 if (addCategorySection.nextElementSibling) {
                     addCategorySection.parentNode.insertBefore(categoryList, addCategorySection.nextElementSibling);
@@ -625,25 +759,86 @@
         }
 
         // 加载指定分类的链接
-        async function loadLinks(category) {
+        async function loadLinks(category = 'all') {
+            console.log('加载链接, 分类:', category);
+            const baseUrl = window.location.protocol === 'file:' 
+                ? 'http://localhost:3000' 
+                : '';
+            
             try {
-                console.log('开始加载分类链接:', category);
-                const baseUrl = window.location.protocol === 'file:' 
-                    ? 'http://localhost:3000' 
-                    : '';
-                const response = await fetch(`${baseUrl}/api/links/${encodeURIComponent(category)}`);
-                console.log('加载链接响应状态:', response.status);
-                
+                let response;
+                if (category === 'all') {
+                    response = await fetch(`${baseUrl}/api/links/all`);
+                } else {
+                    response = await fetch(`${baseUrl}/api/links/${encodeURIComponent(category)}`);
+                }
+
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                
+
                 const links = await response.json();
                 console.log('获取到的链接:', links);
-                displayLinks(links);
+
+                // 按分类组织链接
+                const linksByCategory = {};
+                links.forEach(link => {
+                    if (!linksByCategory[link.category]) {
+                        linksByCategory[link.category] = [];
+                    }
+                    linksByCategory[link.category].push(link);
+                });
+
+                // 清空现有链接列表
+                const linksListContainer = document.querySelector('.links-container');
+                if (!linksListContainer) {
+                    console.log('创建链接容器');
+                    const container = document.createElement('div');
+                    container.className = 'links-container';
+                    document.body.appendChild(container);
+                }
+                linksListContainer.innerHTML = '';
+
+                // 如果没有链接，显示提示信息
+                if (Object.keys(linksByCategory).length === 0) {
+                    const emptyMessage = document.createElement('div');
+                    emptyMessage.className = 'empty-message';
+                    emptyMessage.textContent = '暂无链接';
+                    linksListContainer.appendChild(emptyMessage);
+                    return;
+                }
+
+                // 按分类显示链接
+                Object.entries(linksByCategory).forEach(([category, categoryLinks]) => {
+                    const categorySection = document.createElement('div');
+                    categorySection.className = 'category-section';
+                    categorySection.innerHTML = `<h3>${category}</h3>`;
+
+                    const linksList = document.createElement('div');
+                    linksList.className = 'links-list';
+                    
+                    categoryLinks.forEach(link => {
+                        const linkItem = document.createElement('div');
+                        linkItem.className = 'link-item';
+                        linkItem.innerHTML = `
+                            <div class="link-content">
+                                <img src="${link.favicon || 'default-favicon.png'}" class="link-favicon" alt="favicon" onerror="this.src='default-favicon.png'">
+                                <div class="link-info">
+                                    <a href="${link.url}" target="_blank" class="link-title">${link.title}</a>
+                                    <div class="link-description">${link.description || ''}</div>
+                                </div>
+                            </div>
+                            <button class="delete-button" onclick="deleteLink('${link._id}')">删除</button>
+                        `;
+                        linksList.appendChild(linkItem);
+                    });
+                    
+                    categorySection.appendChild(linksList);
+                    linksListContainer.appendChild(categorySection);
+                });
             } catch (error) {
                 console.error('加载链接失败:', error);
-                alert('加载链接失败，请确保后端服务器已启动');
+                alert('加载链接失败: ' + error.message);
             }
         }
 
