@@ -409,6 +409,81 @@
                 width: 100%;
             }
         }
+
+        /* 搜索栏样式 */
+        .search-container {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+            transition: all var(--transition-speed) ease;
+        }
+
+        .search-container:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .search-box {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        .search-engines {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .search-engine-btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .baidu-btn {
+            background: #4e6ef2;
+            color: white;
+        }
+
+        .baidu-btn:hover {
+            background: #4358d4;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(78, 110, 242, 0.3);
+        }
+
+        .google-btn {
+            background: #ea4335;
+            color: white;
+        }
+
+        .google-btn:hover {
+            background: #d33426;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(234, 67, 53, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -429,6 +504,21 @@
     <div class="main-content" id="main-content">
         <div class="container">
             <h1>TC</h1>
+
+            <!-- 搜索栏 -->
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" class="search-input" id="searchInput" placeholder="输入搜索关键词..." onkeypress="handleSearchKeyPress(event)">
+                    <div class="search-engines">
+                        <button class="search-engine-btn baidu-btn" onclick="search('baidu')">
+                            <i class="fas fa-search"></i> 百度
+                        </button>
+                        <button class="search-engine-btn google-btn" onclick="search('google')">
+                            <i class="fas fa-search"></i> Google
+                        </button>
+                    </div>
+                </div>
+            </div>
 
             <!-- 添加新分类的表单 -->
             <div class="add-form">
@@ -706,6 +796,33 @@
 
         // 页面加载时获取链接
         loadLinks();
+
+        // 搜索功能
+        function search(engine) {
+            const searchInput = document.getElementById('searchInput');
+            const query = encodeURIComponent(searchInput.value.trim());
+            
+            if (!query) {
+                alert('请输入搜索关键词');
+                return;
+            }
+            
+            let url;
+            if (engine === 'baidu') {
+                url = `https://www.baidu.com/s?wd=${query}`;
+            } else if (engine === 'google') {
+                url = `https://www.google.com/search?q=${query}`;
+            }
+            
+            window.open(url, '_blank');
+        }
+
+        // 回车键触发搜索
+        function handleSearchKeyPress(event) {
+            if (event.key === 'Enter') {
+                search('baidu'); // 默认使用百度搜索
+            }
+        }
     </script>
 </body>
 </html> 
