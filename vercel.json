@@ -3,14 +3,14 @@
   "builds": [
     {
       "src": "backend/server.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "maxLambdaSize": "50mb"
+      }
     },
     {
       "src": "frontend/index.html",
-      "use": "@vercel/static",
-      "config": {
-        "zeroConfig": true
-      }
+      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -27,6 +27,6 @@
     }
   ],
   "env": {
-    "MONGODB_URI": "mongodb+srv://liyuhao658:ZvoM1ytkvYQKedIS@cluster0.srgfy.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+    "MONGODB_URI": "mongodb+srv://liyuhao658:PndF4hROA11U7lZC@cluster0.srgfy.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
   }
 }
