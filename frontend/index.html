@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TC</title>
+<<<<<<< HEAD
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+=======
+>>>>>>> 5e740dd43606346c2487a1e7bedd6ee24ac3aa13
     <style>
         * {
             margin: 0;
@@ -15,8 +18,13 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
             background-color: #f5f6fa;
+<<<<<<< HEAD
             line-height: 1.6;
             display: flex;
+=======
+            padding: 2rem;
+            line-height: 1.6;
+>>>>>>> 5e740dd43606346c2487a1e7bedd6ee24ac3aa13
         }
 
         .container {
@@ -156,6 +164,7 @@
             line-height: 1;
         }
 
+<<<<<<< HEAD
         /* 添加侧边栏样式 */
         .sidebar {
             width: 250px;
@@ -257,11 +266,21 @@
             .main-content {
                 margin-left: 60px;
                 width: calc(100% - 60px);
+=======
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            .links {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+>>>>>>> 5e740dd43606346c2487a1e7bedd6ee24ac3aa13
             }
         }
     </style>
 </head>
 <body>
+<<<<<<< HEAD
     <!-- 侧边栏 -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
@@ -312,6 +331,35 @@
 
             <div id="categories"></div>
         </div>
+=======
+    <div class="container">
+        <h1>TC</h1>
+
+        <!-- 添加新分类的表单 -->
+        <div class="add-form">
+            <div class="form-group">
+                <label>添加新分类</label>
+                <input type="text" id="newCategory" placeholder="输入分类名称">
+                <button onclick="addNewCategory()">添加分类</button>
+            </div>
+        </div>
+
+        <!-- 添加新链接的表单 -->
+        <div class="add-form">
+            <div class="form-group">
+                <label>添加新链接</label>
+                <select id="category"></select>
+            </div>
+            <div class="form-group">
+                <input type="text" id="title" placeholder="网站名称">
+                <input type="url" id="url" placeholder="网站地址">
+                <input type="text" id="description" placeholder="简短描述">
+                <button onclick="addNewLink()">添加链接</button>
+            </div>
+        </div>
+
+        <div id="categories"></div>
+>>>>>>> 5e740dd43606346c2487a1e7bedd6ee24ac3aa13
     </div>
 
     <script>
@@ -497,6 +545,7 @@
 
         // 页面加载时获取链接
         loadLinks();
+<<<<<<< HEAD
 
         // 侧边栏切换功能
         function toggleSidebar() {
@@ -528,6 +577,8 @@
                 }
             });
         });
+=======
+>>>>>>> 5e740dd43606346c2487a1e7bedd6ee24ac3aa13
     </script>
 </body>
 </html> 
