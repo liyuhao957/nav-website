@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TC</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * {
             margin: 0;
@@ -1009,23 +1009,7 @@
         // 修改显示链接的函数
         function displayLinks(links) {
             const mainContent = document.querySelector('.main-content');
-            mainContent.innerHTML = `
-                <div class="search-container">
-                    <input type="text" id="searchInput" class="search-input" placeholder="输入关键词搜索..." onkeypress="handleSearchKeyPress(event)">
-                    <div class="search-engines">
-                        <button class="search-engine-btn baidu-btn" onclick="search('baidu')">
-                            <i class="fas fa-search"></i>百度
-                        </button>
-                        <button class="search-engine-btn google-btn" onclick="search('google')">
-                            <i class="fas fa-search"></i>Google
-                        </button>
-                    </div>
-                </div>
-            `;
-
-            // 创建链接容器
-            const linksContainer = document.createElement('div');
-            linksContainer.className = 'links-container';
+            mainContent.innerHTML = '';
 
             Object.entries(links).forEach(([category, categoryLinks]) => {
                 const categoryDiv = document.createElement('div');
@@ -1067,13 +1051,8 @@
 
                 categoryDiv.appendChild(categoryHeader);
                 categoryDiv.appendChild(linksDiv);
-                linksContainer.appendChild(categoryDiv);
+                mainContent.appendChild(categoryDiv);
             });
-
-            mainContent.appendChild(linksContainer);
-
-            // 更新侧边栏导航
-            updateNavLinks(links);
         }
 
         // 添加样式
@@ -1103,38 +1082,31 @@
             .link-actions {
                 display: flex;
                 gap: 10px;
-            }
-
-            .edit-button, .delete-button {
-                padding: 8px 15px;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 14px;
-                display: flex;
-                align-items: center;
-                gap: 5px;
-                transition: all 0.3s ease;
+                margin-left: 10px;
             }
 
             .edit-button {
                 background-color: #4CAF50;
                 color: white;
-            }
-
-            .edit-button:hover {
-                background-color: #45a049;
-                transform: translateY(-1px);
+                border: none;
+                padding: 8px 15px;
+                border-radius: 4px;
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
             }
 
             .delete-button {
                 background-color: #f44336;
                 color: white;
-            }
-
-            .delete-button:hover {
-                background-color: #da190b;
-                transform: translateY(-1px);
+                border: none;
+                padding: 8px 15px;
+                border-radius: 4px;
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
             }
 
             .link-title {
