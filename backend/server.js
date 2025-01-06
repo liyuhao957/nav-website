@@ -8,15 +8,19 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 连接 MongoDB Atlas
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-}).then(() => {
-  console.log('Connected to MongoDB');
-  
-  // 初始化默认数据
-  Link.countDocuments().then(count => {
+// MongoDB 连接配置
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000, // 超时时间设置为 5 秒
+      socketTimeoutMS: 45000, // Socket 超时设置为 45 秒
+    });
+    console.log('MongoDB connected successfully');
+
+    // 初始化默认数据
+    const count = await Link.countDocuments();
     if (count === 0) {
       const defaultLinks = [
         {
@@ -38,18 +42,22 @@ mongoose.connect(process.env.MONGODB_URI, {
           description: "视频学习平台"
         }
       ];
-      
-      Link.insertMany(defaultLinks)
-        .then(() => console.log('Default links added'))
-        .catch(err => console.error('Error adding default links:', err));
+      await Link.insertMany(defaultLinks);
+      console.log('Default links added');
     }
-  });
-});
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    process.exit(1);
+  }
+};
+
+// 连接数据库
+connectDB();
 
 // API 路由
 app.get('/api/links', async (req, res) => {
   try {
-    const links = await Link.find();
+    const links = await Link.find().maxTimeMS(5000); // 设置查询超时
     const groupedLinks = links.reduce((acc, link) => {
       if (!acc[link.category]) {
         acc[link.category] = [];
@@ -63,6 +71,7 @@ app.get('/api/links', async (req, res) => {
     }, {});
     res.json(groupedLinks);
   } catch (error) {
+    console.error('Error fetching links:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -75,12 +84,11 @@ app.post('/api/categories', async (req, res) => {
       return res.status(400).json({ error: 'Missing category name' });
     }
     
-    const existingCategory = await Link.findOne({ category });
+    const existingCategory = await Link.findOne({ category }).maxTimeMS(5000);
     if (existingCategory) {
       return res.status(400).json({ error: 'Category already exists' });
     }
     
-    // 创建一个空链接来创建新分类
     await Link.create({
       category,
       title: "示例链接",
@@ -90,6 +98,7 @@ app.post('/api/categories', async (req, res) => {
     
     res.json({ success: true });
   } catch (error) {
+    console.error('Error creating category:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -111,6 +120,7 @@ app.post('/api/links', async (req, res) => {
     
     res.json({ success: true });
   } catch (error) {
+    console.error('Error adding link:', error);
     res.status(500).json({ error: error.message });
   }
 });
