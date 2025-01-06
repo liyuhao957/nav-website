@@ -13,23 +13,10 @@
       "use": "@vercel/static"
     }
   ],
-  "routes": [
-    {
-      "src": "/api/health",
-      "dest": "backend/server.js",
-      "continue": true
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "backend/server.js"
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "frontend/index.html"
-    }
+  "rewrites": [
+    { "source": "/api/health", "destination": "backend/server.js" },
+    { "source": "/api/(.*)", "destination": "backend/server.js" },
+    { "source": "/(.*)", "destination": "frontend/index.html" }
   ],
   "headers": [
     {
