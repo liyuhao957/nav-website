@@ -208,6 +208,33 @@ app.delete('/api/categories/:category', async (req, res) => {
   }
 });
 
+// 修改链接
+app.put('/api/links/:category/:index', async (req, res) => {
+  try {
+    const { category, index } = req.params;
+    const { title, url, description } = req.body;
+    
+    const links = await Link.find({ category });
+    if (index >= 0 && index < links.length) {
+      const link = links[index];
+      
+      // 更新链接信息
+      await Link.findByIdAndUpdate(link._id, {
+        title: title || link.title,
+        url: url || link.url,
+        description: description || link.description
+      });
+      
+      res.json({ success: true });
+    } else {
+      res.status(404).json({ error: '链接不存在' });
+    }
+  } catch (error) {
+    console.error('Error updating link:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // 错误处理中间件
 app.use((err, req, res, next) => {
   console.error(err.stack);

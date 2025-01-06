@@ -484,6 +484,53 @@
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(234, 67, 53, 0.3);
         }
+
+        .edit-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .edit-button:hover {
+            background-color: #45a049;
+        }
+
+        .edit-form {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+
+        .edit-form input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .edit-form button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        .edit-form button.cancel {
+            background-color: #f44336;
+        }
+
+        .edit-form button:hover {
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
@@ -822,6 +869,113 @@
             if (event.key === 'Enter') {
                 search('baidu'); // 默认使用百度搜索
             }
+        }
+
+        // 编辑链接
+        async function editLink(category, index) {
+            const linkElement = document.querySelector(`[data-category="${category}"] .link-item:nth-child(${parseInt(index) + 1})`);
+            const currentTitle = linkElement.querySelector('.link-title').textContent;
+            const currentUrl = linkElement.querySelector('a').href;
+            const currentDesc = linkElement.querySelector('.link-description').textContent;
+            
+            // 创建编辑表单
+            const editForm = document.createElement('div');
+            editForm.className = 'edit-form';
+            editForm.innerHTML = `
+                <input type="text" id="edit-title" value="${currentTitle}" placeholder="标题">
+                <input type="text" id="edit-url" value="${currentUrl}" placeholder="链接">
+                <input type="text" id="edit-description" value="${currentDesc}" placeholder="描述">
+                <button onclick="saveEdit('${category}', ${index})">保存</button>
+                <button class="cancel" onclick="cancelEdit('${category}', ${index})">取消</button>
+            `;
+            
+            // 隐藏原有内容，显示编辑表单
+            linkElement.style.display = 'none';
+            linkElement.insertAdjacentElement('afterend', editForm);
+        }
+
+        // 保存编辑
+        async function saveEdit(category, index) {
+            const editForm = document.querySelector(`[data-category="${category}"] .edit-form`);
+            const title = editForm.querySelector('#edit-title').value;
+            const url = editForm.querySelector('#edit-url').value;
+            const description = editForm.querySelector('#edit-description').value;
+            
+            try {
+                const response = await fetch(`/api/links/${category}/${index}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ title, url, description })
+                });
+                
+                if (response.ok) {
+                    // 更新成功，重新加载链接
+                    await loadLinks();
+                } else {
+                    const error = await response.json();
+                    alert('修改失败: ' + error.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('修改失败');
+            }
+        }
+
+        // 取消编辑
+        function cancelEdit(category, index) {
+            const linkElement = document.querySelector(`[data-category="${category}"] .link-item:nth-child(${parseInt(index) + 1})`);
+            const editForm = document.querySelector(`[data-category="${category}"] .edit-form`);
+            
+            // 显示原有内容，移除编辑表单
+            linkElement.style.display = 'block';
+            editForm.remove();
+        }
+
+        // 修改显示链接的函数
+        function displayLinks(links) {
+            const mainContent = document.querySelector('.main-content');
+            mainContent.innerHTML = '';
+            
+            Object.entries(links).forEach(([category, categoryLinks], categoryIndex) => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'category';
+                categoryDiv.setAttribute('data-category', category);
+                
+                const categoryHeader = document.createElement('div');
+                categoryHeader.className = 'category-header';
+                categoryHeader.innerHTML = `
+                    <h2>${category}</h2>
+                    <div class="category-actions">
+                        <button onclick="deleteCategory('${category}')" class="delete-button">删除分类</button>
+                        <button onclick="renameCategory('${category}')" class="rename-button">重命名</button>
+                    </div>
+                `;
+                
+                const linksDiv = document.createElement('div');
+                linksDiv.className = 'links';
+                
+                categoryLinks.forEach((link, index) => {
+                    const linkDiv = document.createElement('div');
+                    linkDiv.className = 'link-item';
+                    linkDiv.innerHTML = `
+                        <div class="link-content">
+                            <a href="${link.url}" target="_blank" class="link-title">${link.title}</a>
+                            <p class="link-description">${link.description}</p>
+                        </div>
+                        <div class="link-actions">
+                            <button onclick="editLink('${category}', ${index})" class="edit-button">编辑</button>
+                            <button onclick="deleteLink('${category}', ${index})" class="delete-button">删除</button>
+                        </div>
+                    `;
+                    linksDiv.appendChild(linkDiv);
+                });
+                
+                categoryDiv.appendChild(categoryHeader);
+                categoryDiv.appendChild(linksDiv);
+                mainContent.appendChild(categoryDiv);
+            });
         }
     </script>
 </body>
