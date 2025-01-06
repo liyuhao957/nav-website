@@ -141,6 +141,58 @@ app.delete('/api/links/:category/:index', async (req, res) => {
   }
 });
 
+// 重命名分类
+app.put('/api/categories/:oldName', async (req, res) => {
+  try {
+    const { oldName } = req.params;
+    const { newName } = req.body;
+    
+    if (!newName) {
+      return res.status(400).json({ error: '新分类名称不能为空' });
+    }
+
+    // 检查新名称是否已存在
+    const existingCategory = await Link.findOne({ category: newName });
+    if (existingCategory) {
+      return res.status(400).json({ error: '该分类名称已存在' });
+    }
+
+    // 更新所有该分类下的链接
+    const result = await Link.updateMany(
+      { category: oldName },
+      { $set: { category: newName } }
+    );
+
+    if (result.modifiedCount === 0) {
+      return res.status(404).json({ error: '分类不存在' });
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error renaming category:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 删除分类
+app.delete('/api/categories/:category', async (req, res) => {
+  try {
+    const { category } = req.params;
+    
+    // 删除该分类下的所有链接
+    const result = await Link.deleteMany({ category });
+    
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ error: '分类不存在' });
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting category:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // 错误处理中间件
 app.use((err, req, res, next) => {
   console.error(err.stack);
