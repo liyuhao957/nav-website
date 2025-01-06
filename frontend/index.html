@@ -275,15 +275,8 @@
                 <i class="fas fa-chevron-left"></i>
             </div>
         </div>
-        <div class="nav-links">
-            <a href="#常用工具" class="nav-link">
-                <i class="fas fa-tools"></i>
-                <span>常用工具</span>
-            </a>
-            <a href="#学习资源" class="nav-link">
-                <i class="fas fa-book"></i>
-                <span>学习资源</span>
-            </a>
+        <div class="nav-links" id="nav-links">
+            <!-- 动态生成的导航链接将在这里 -->
         </div>
     </div>
 
@@ -320,13 +313,27 @@
     </div>
 
     <script>
-        // 加载所有链接
+        // 更新导航栏
+        function updateNavLinks(categories) {
+            const navLinks = document.getElementById('nav-links');
+            navLinks.innerHTML = Object.keys(categories).map(category => `
+                <a href="#${category}" class="nav-link">
+                    <i class="fas fa-folder"></i>
+                    <span>${category}</span>
+                </a>
+            `).join('');
+        }
+
+        // 修改 loadLinks 函数，添加更新导航栏的功能
         async function loadLinks() {
             try {
                 const response = await fetch('/api/links');
                 const links = await response.json();
                 const container = document.getElementById('categories');
                 container.innerHTML = '';
+
+                // 更新导航栏
+                updateNavLinks(links);
 
                 // 更新分类选择框
                 const categorySelect = document.getElementById('category');
