@@ -12,28 +12,43 @@
             box-sizing: border-box;
         }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            background-color: #f5f6fa;
-            line-height: 1.6;
-            display: flex;
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --warning-color: #f1c40f;
+            --text-color: #2c3e50;
+            --bg-color: #f5f6fa;
+            --card-bg: #ffffff;
+            --sidebar-width: 250px;
+            --sidebar-collapsed-width: 60px;
+            --transition-speed: 0.3s;
         }
 
-        /* 侧边栏样式 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: var(--bg-color);
+            line-height: 1.6;
+            display: flex;
+            color: var(--text-color);
+        }
+
+        /* 侧边栏样式优化 */
         .sidebar {
-            width: 250px;
+            width: var(--sidebar-width);
             height: 100vh;
-            background: white;
+            background: var(--card-bg);
             box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
+            transition: all var(--transition-speed) ease;
             position: fixed;
             left: 0;
             top: 0;
             z-index: 1000;
+            border-right: 1px solid rgba(0,0,0,0.1);
         }
 
         .sidebar.collapsed {
-            width: 60px;
+            width: var(--sidebar-collapsed-width);
         }
 
         .sidebar-header {
@@ -41,12 +56,22 @@
             text-align: center;
             border-bottom: 1px solid #eee;
             position: relative;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .sidebar-header h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
         }
 
         .toggle-btn {
             position: absolute;
             right: -12px;
-            top: 20px;
+            top: 50%;
+            transform: translateY(-50%);
             background: white;
             border: 1px solid #eee;
             border-radius: 50%;
@@ -56,55 +81,58 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all var(--transition-speed) ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .toggle-btn:hover {
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
         }
 
         .nav-links {
             padding: 20px 0;
+            overflow-y: auto;
+            height: calc(100vh - 80px);
         }
 
         .nav-link {
             padding: 12px 20px;
             display: flex;
             align-items: center;
-            color: #2c3e50;
+            color: var(--text-color);
             text-decoration: none;
-            transition: all 0.3s ease;
+            transition: all var(--transition-speed) ease;
+            border-left: 3px solid transparent;
+            margin: 5px 0;
         }
 
         .nav-link:hover {
-            background: #f8f9fa;
-            color: #3498db;
+            background: rgba(52, 152, 219, 0.1);
+            color: var(--primary-color);
+            border-left-color: var(--primary-color);
+            padding-left: 25px;
         }
 
         .nav-link i {
             margin-right: 15px;
             width: 20px;
             text-align: center;
+            font-size: 1.1em;
         }
 
-        .nav-link span {
-            opacity: 1;
-            transition: all 0.3s ease;
-        }
-
-        .sidebar.collapsed .nav-link span {
-            opacity: 0;
-            width: 0;
-            display: none;
-        }
-
-        /* 主内容区域样式 */
+        /* 主内容区域样式优化 */
         .main-content {
-            margin-left: 250px;
+            margin-left: var(--sidebar-width);
             padding: 2rem;
-            width: calc(100% - 250px);
-            transition: all 0.3s ease;
+            width: calc(100% - var(--sidebar-width));
+            transition: all var(--transition-speed) ease;
+            min-height: 100vh;
         }
 
         .main-content.expanded {
-            margin-left: 60px;
-            width: calc(100% - 60px);
+            margin-left: var(--sidebar-collapsed-width);
+            width: calc(100% - var(--sidebar-collapsed-width));
         }
 
         .container {
@@ -112,81 +140,41 @@
             margin: 0 auto;
         }
 
-        /* 其他样式保持不变 */
         h1 {
-            color: #2c3e50;
+            color: var(--text-color);
             text-align: center;
             margin-bottom: 2rem;
-            font-weight: 500;
-        }
-
-        .category {
-            background: white;
-            border-radius: 10px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
-        }
-
-        .category-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid #eee;
-        }
-
-        .category-title {
-            color: #34495e;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .category-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .links {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 1rem;
-        }
-
-        .link-card {
-            padding: 1rem;
-            border-radius: 8px;
-            background: #f8f9fa;
-            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 2.5rem;
             position: relative;
+            padding-bottom: 10px;
         }
 
-        .link-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        h1:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            border-radius: 3px;
         }
 
-        .link-card a {
-            color: #3498db;
-            text-decoration: none;
-            display: block;
-        }
-
-        .link-card p {
-            color: #7f8c8d;
-            font-size: 0.9rem;
-            margin-top: 0.5rem;
-        }
-
+        /* 表单样式优化 */
         .add-form {
-            background: white;
+            background: var(--card-bg);
             padding: 1.5rem;
-            border-radius: 8px;
+            border-radius: 10px;
             margin-bottom: 2rem;
             box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+            transition: all var(--transition-speed) ease;
+        }
+
+        .add-form:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
 
         .form-group {
@@ -196,59 +184,197 @@
         .form-group label {
             display: block;
             margin-bottom: 0.5rem;
-            color: #2c3e50;
+            color: var(--text-color);
+            font-weight: 500;
         }
 
-        input, select, button {
-            padding: 0.5rem;
+        input, select {
+            width: 100%;
+            padding: 0.8rem;
             border: 1px solid #ddd;
-            border-radius: 4px;
+            border-radius: 6px;
             font-size: 1rem;
+            transition: all 0.3s;
+            margin-bottom: 0.5rem;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
         }
 
         button {
-            background: #3498db;
+            background: var(--primary-color);
             color: white;
             border: none;
-            padding: 0.5rem 1rem;
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: all 0.3s;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         button:hover {
-            background: #2980b9;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
         }
 
         .btn-danger {
-            background: #e74c3c;
+            background: var(--danger-color);
         }
 
         .btn-danger:hover {
             background: #c0392b;
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
         }
 
         .btn-edit {
-            background: #f1c40f;
+            background: var(--warning-color);
         }
 
         .btn-edit:hover {
             background: #f39c12;
+            box-shadow: 0 4px 12px rgba(241, 196, 15, 0.3);
+        }
+
+        /* 分类和链接卡片样式优化 */
+        .category {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+            transition: all var(--transition-speed) ease;
+        }
+
+        .category:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #eee;
+        }
+
+        .category-title {
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .category-actions {
+            display: flex;
+            gap: 0.8rem;
+        }
+
+        .links {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.2rem;
+        }
+
+        .link-card {
+            padding: 1.2rem;
+            border-radius: 8px;
+            background: #f8f9fa;
+            transition: all var(--transition-speed) ease;
+            position: relative;
+            border: 1px solid #eee;
+        }
+
+        .link-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: var(--primary-color);
+        }
+
+        .link-card a {
+            color: var(--primary-color);
+            text-decoration: none;
+            display: block;
+            font-weight: 500;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .link-card p {
+            color: #666;
+            font-size: 0.9rem;
+            margin: 0;
+            line-height: 1.4;
         }
 
         .delete-btn {
-            color: #e74c3c;
-            cursor: pointer;
             position: absolute;
             top: 0.5rem;
             right: 0.5rem;
+            color: var(--danger-color);
+            cursor: pointer;
             font-size: 1.2rem;
-            line-height: 1;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s;
+            opacity: 0;
         }
 
-        /* 响应式设计 */
+        .link-card:hover .delete-btn {
+            opacity: 1;
+        }
+
+        .delete-btn:hover {
+            background: rgba(231, 76, 60, 0.1);
+            transform: scale(1.1);
+        }
+
+        /* 添加加载动画 */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+        }
+
+        .loading:after {
+            content: '';
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 响应式设计优化 */
         @media (max-width: 768px) {
+            :root {
+                --sidebar-width: 60px;
+            }
+            
             .sidebar {
-                width: 60px;
+                width: var(--sidebar-width);
             }
             
             .sidebar .nav-link span {
@@ -256,12 +382,31 @@
             }
             
             .main-content {
-                margin-left: 60px;
-                width: calc(100% - 60px);
+                margin-left: var(--sidebar-width);
+                width: calc(100% - var(--sidebar-width));
+                padding: 1rem;
             }
             
             .links {
-                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+
+            .category-header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .category-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .form-group {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
             }
         }
     </style>
@@ -324,12 +469,19 @@
             `).join('');
         }
 
-        // 修改 loadLinks 函数，添加更新导航栏的功能
+        // 添加加载状态显示
+        function showLoading(container) {
+            container.innerHTML = '<div class="loading"></div>';
+        }
+
+        // 修改 loadLinks 函数
         async function loadLinks() {
+            const container = document.getElementById('categories');
+            showLoading(container);
+            
             try {
                 const response = await fetch('/api/links');
                 const links = await response.json();
-                const container = document.getElementById('categories');
                 container.innerHTML = '';
 
                 // 更新导航栏
@@ -346,17 +498,26 @@
                     const categoryHtml = `
                         <div class="category" id="${category}">
                             <div class="category-header">
-                                <h2 class="category-title">${category}</h2>
+                                <h2 class="category-title">
+                                    <i class="fas fa-folder-open"></i>
+                                    ${category}
+                                </h2>
                                 <div class="category-actions">
-                                    <button class="btn-edit" onclick="renameCategory('${category}')">重命名</button>
-                                    <button class="btn-danger" onclick="deleteCategory('${category}')">删除分类</button>
+                                    <button class="btn-edit" onclick="renameCategory('${category}')">
+                                        <i class="fas fa-edit"></i> 重命名
+                                    </button>
+                                    <button class="btn-danger" onclick="deleteCategory('${category}')">
+                                        <i class="fas fa-trash-alt"></i> 删除分类
+                                    </button>
                                 </div>
                             </div>
                             <div class="links">
                                 ${items.map((link, index) => `
                                     <div class="link-card">
-                                        <span class="delete-btn" onclick="deleteLink('${category}', ${index})">×</span>
-                                        <a href="${link.url}" target="_blank">${link.title}</a>
+                                        <span class="delete-btn" onclick="deleteLink('${category}', ${index})" title="删除">×</span>
+                                        <a href="${link.url}" target="_blank">
+                                            <i class="fas fa-link"></i> ${link.title}
+                                        </a>
                                         <p>${link.description}</p>
                                     </div>
                                 `).join('')}
@@ -367,6 +528,12 @@
                 }
             } catch (error) {
                 console.error('Error loading links:', error);
+                container.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i>
+                        加载失败: ${error.message}
+                    </div>
+                `;
             }
         }
 
