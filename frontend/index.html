@@ -10,13 +10,39 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 
+                Roboto, Oxygen-Sans, Ubuntu, Cantarell, 
+                'Helvetica Neue', Arial, sans-serif;
             background-color: #f5f7fa;
             color: #2c3e50;
             line-height: 1.5;
+            text-rendering: optimizeLegibility;
+        }
+
+        /* 确保所有文本元素使用相同的字体设置 */
+        input, button, select, textarea {
+            font-family: inherit;
+            font-size: inherit;
+            line-height: inherit;
+        }
+
+        /* 统一不同系统下的文本渲染 */
+        .link-title, .link-description, .section-title {
+            font-weight: 500;  /* 使用数字而不是 'bold' */
+            letter-spacing: -0.01em;  /* 细微调整字母间距 */
+        }
+
+        /* 确保按钮在不同系统下的一致性 */
+        button {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            margin: 0;
         }
 
         /* 主要内容区域布局 */
@@ -1091,10 +1117,31 @@
         async function filterLinksByCategory(category) {
             try {
                 console.log('筛选分类:', category);
+                // 同步左侧导航栏
+                window.handleCategoryFilterChange(category);
+                
                 await loadLinks(category);
             } catch (error) {
                 console.error('筛选链接失败:', error);
-                alert('筛选链接失败: ' + error.message);
+                showToast('筛选链接失败: ' + error.message, 'error');
+            }
+        }
+
+        // 加载分类链接的辅助函数
+        async function loadCategoryLinks(category, container) {
+            try {
+                const response = await fetch(`${baseUrl}/api/links/${encodeURIComponent(category)}`);
+                if (!response.ok) throw new Error('获取链接失败');
+                
+                const links = await response.json();
+                container.innerHTML = links.map(link => `
+                    <a href="${link.url}" class="category-nav-link" target="_blank" title="${link.description || ''}">
+                        ${link.title}
+                    </a>
+                `).join('');
+            } catch (error) {
+                console.error('加载分类链接失败:', error);
+                showToast('加载分类链接失败', 'error');
             }
         }
 
@@ -1552,10 +1599,20 @@
 
         // 添加编辑分类功能
         async function editCategory(oldCategory) {
+            console.log('开始编辑分类:', oldCategory);
             const newCategory = prompt('请输入新的分类名称:', oldCategory);
-            if (!newCategory || newCategory === oldCategory) return;
+            if (!newCategory) {
+                showToast('分类名称不能为空', 'error');
+                return;
+            }
+            
+            if (newCategory === oldCategory) {
+                showToast('新分类名称与原分类名称相同', 'info');
+                return;
+            }
 
             try {
+                console.log('发送更新分类请求:', { oldCategory, newCategory });
                 const response = await fetch(`${baseUrl}/api/categories/${encodeURIComponent(oldCategory)}`, {
                     method: 'PUT',
                     headers: {
@@ -1564,15 +1621,17 @@
                     body: JSON.stringify({ newCategory })
                 });
 
+                const data = await response.json();
+                
                 if (!response.ok) {
-                    throw new Error('更新分类失败');
+                    throw new Error(data.error || '更新分类失败');
                 }
 
                 await loadCategories();
                 await updateSidebarNav();
                 await loadLinks('all');  // 重新加载所有链接
-                showToast('分类更新成功！');
-                                        } catch (error) {
+                showToast(data.message || '分类更新成功！');
+            } catch (error) {
                 console.error('更新分类失败:', error);
                 showToast('更新分类失败: ' + error.message, 'error');
             }
@@ -1606,12 +1665,13 @@
         // 更新侧边栏导航
         async function updateSidebarNav() {
             const nav = document.getElementById('categoryNav');
-            if (!nav) {
-                console.error('找不到导航栏元素');
-                return;
-            }
-            
-            nav.innerHTML = ''; // 清空现有内容
+            nav.innerHTML = '';
+
+            // 创建一个映射来存储每个分类对应的DOM元素
+            const categoryElements = new Map();
+
+            // 跟踪当前展开的分类
+            let currentExpandedCategory = null;
 
             try {
                 // 添加"显示所有分类"选项
@@ -1624,9 +1684,26 @@
                 `;
 
                 allCategoriesLi.querySelector('.category-nav-header').addEventListener('click', async () => {
-                    const headers = nav.querySelectorAll('.category-nav-header');
-                    headers.forEach(header => header.classList.remove('active'));
+                    // 移除所有active状态
+                    nav.querySelectorAll('.category-nav-header').forEach(header => header.classList.remove('active'));
                     allCategoriesLi.querySelector('.category-nav-header').classList.add('active');
+
+                    // 收起当前展开的分类
+                    if (currentExpandedCategory) {
+                        const element = categoryElements.get(currentExpandedCategory);
+                        if (element) {
+                            element.toggle.classList.remove('expanded');
+                            element.links.classList.remove('expanded');
+                        }
+                        currentExpandedCategory = null;
+                    }
+
+                    // 更新右侧选择器
+                    const categoryFilter = document.getElementById('categoryFilter');
+                    if (categoryFilter) {
+                        categoryFilter.value = 'all';
+                    }
+
                     await filterLinksByCategory('all');
                 });
 
@@ -1640,64 +1717,117 @@
                 // 获取分类列表
                 const response = await fetch(`${baseUrl}/api/categories`);
                 if (!response.ok) throw new Error('获取分类失败');
-                
                 const categories = await response.json();
-                
-                // 添加分类项
+
+                // 为每个分类创建导航项
                 for (const category of categories) {
                     const li = document.createElement('li');
                     li.className = 'category-nav-item';
                     li.innerHTML = `
                         <div class="category-nav-header">
                             <span class="category-nav-toggle">▶</span>
-                            <span>${category}</span>
+                            <span class="category-name">${category}</span>
                         </div>
                         <div class="category-nav-links"></div>
                     `;
 
                     const header = li.querySelector('.category-nav-header');
                     const toggle = li.querySelector('.category-nav-toggle');
-                    const linksContainer = li.querySelector('.category-nav-links');
+                    const links = li.querySelector('.category-nav-links');
                     let linksLoaded = false;
 
+                    // 存储这个分类的DOM元素
+                    categoryElements.set(category, { header, toggle, links, li });
+
                     header.addEventListener('click', async () => {
-                        const headers = nav.querySelectorAll('.category-nav-header');
-                        headers.forEach(h => h.classList.remove('active'));
+                        console.log('点击分类:', category);
+                        // 移除所有active状态
+                        nav.querySelectorAll('.category-nav-header').forEach(h => h.classList.remove('active'));
                         header.classList.add('active');
 
-                        // 切换展开状态
-                        const isExpanded = toggle.classList.contains('expanded');
-                        if (!isExpanded && !linksLoaded) {
-                            try {
-                                const linksResponse = await fetch(`${baseUrl}/api/links/${encodeURIComponent(category)}`);
-                                if (!linksResponse.ok) throw new Error('获取链接失败');
-                                
-                                const links = await linksResponse.json();
-                                linksContainer.innerHTML = links.map(link => `
-                                    <a href="${link.url}" class="category-nav-link" target="_blank" title="${link.description || ''}">
-                                        ${link.title}
-                                    </a>
-                                `).join('');
-                                
-                                linksLoaded = true;
-                            } catch (error) {
-                                console.error('加载分类链接失败:', error);
-                                showToast('加载分类链接失败', 'error');
+                        // 更新右侧选择器
+                        const categoryFilter = document.getElementById('categoryFilter');
+                        if (categoryFilter) {
+                            categoryFilter.value = category;
+                        }
+
+                        // 如果点击的是当前展开的分类，收起它
+                        if (currentExpandedCategory === category) {
+                            console.log('收起当前展开的分类:', category);
+                            toggle.classList.remove('expanded');
+                            links.classList.remove('expanded');
+                            currentExpandedCategory = null;
+                            
+                            await loadLinks(category);
+                            return;
+                        }
+
+                        // 收起之前展开的分类
+                        if (currentExpandedCategory) {
+                            console.log('收起之前展开的分类:', currentExpandedCategory);
+                            const prevElement = categoryElements.get(currentExpandedCategory);
+                            if (prevElement) {
+                                prevElement.toggle.classList.remove('expanded');
+                                prevElement.links.classList.remove('expanded');
                             }
                         }
 
-                        toggle.classList.toggle('expanded');
-                        linksContainer.classList.toggle('expanded');
-                        await filterLinksByCategory(category);
-                    });
+                        console.log('准备展开分类:', category);
+                      // 展开当前分类
+                      toggle.classList.add('expanded');
+                      links.classList.add('expanded');
+                      currentExpandedCategory = category;
 
-                    nav.appendChild(li);
-                }
-            } catch (error) {
-                console.error('加载分类导航失败:', error);
-                showToast('加载分类导航失败: ' + error.message, 'error');
-            }
-        }
-    </script>
+                      // 加载链接（如果还没加载）
+                      if (!linksLoaded) {
+                          console.log('开始加载分类链接:', category);
+                          try {
+                              const linksResponse = await fetch(`${baseUrl}/api/links/${encodeURIComponent(category)}`);
+                              if (!linksResponse.ok) throw new Error('获取链接失败');
+                              
+                              const categoryLinks = await linksResponse.json();
+                              console.log('获取到的链接数量:', categoryLinks.length);
+                              links.innerHTML = categoryLinks.map(link => `
+                                  <a href="${link.url}" class="category-nav-link" target="_blank" title="${link.description || ''}">
+                                      ${link.title}
+                                  </a>
+                              `).join('');
+                              
+                              linksLoaded = true;
+                              console.log('链接加载完成');
+                          } catch (error) {
+                              console.error('加载分类链接失败:', error);
+                              showToast('加载分类链接失败', 'error');
+                          }
+                      }
+
+                      await loadLinks(category);
+                  });
+
+                  nav.appendChild(li);
+              }
+
+              // 添加一个方法来处理右侧分类选择器的变化
+              window.handleCategoryFilterChange = function(category) {
+                  console.log('分类选择器变化:', category);
+                  if (category === 'all') {
+                      console.log('选择显示所有分类');
+                      allCategoriesLi.querySelector('.category-nav-header').click();
+                  } else {
+                      console.log('查找分类元素:', category);
+                      const element = categoryElements.get(category);
+                      console.log('找到的元素:', element ? '存在' : '不存在');
+                      if (element) {
+                          element.header.click();
+                      }
+                  }
+              };
+
+          } catch (error) {
+              console.error('加载分类导航失败:', error);
+              showToast('加载分类导航失败: ' + error.message, 'error');
+          }
+      }
+  </script>
 </body>
 </html> 

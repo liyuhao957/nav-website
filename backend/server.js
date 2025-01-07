@@ -8,12 +8,12 @@ const Link = require('./models/Link');
 
 // 数据库连接配置
 const dbConfig = {
-    host: process.env.MYSQL_HOST || '159.75.107.196',
-    user: process.env.MYSQL_USER || 'root',
-    password: process.env.MYSQL_PASSWORD || 'debezium',
-    database: process.env.MYSQL_DATABASE || 'nav_website',
+    host: '159.75.107.196',
+    user: 'root',
+    password: 'debezium',
+    database: 'nav_website',
     waitForConnections: true,
-    connectionLimit: 2,
+    connectionLimit: 10,
     queueLimit: 0,
     enableKeepAlive: true,
     keepAliveInitialDelay: 0
@@ -21,6 +21,15 @@ const dbConfig = {
 
 // 创建数据库连接池
 const pool = mysql.createPool(dbConfig);
+
+// 监听连接池事件
+pool.on('connection', () => {
+    console.log('新的数据库连接已创建');
+});
+
+pool.on('release', () => {
+    console.log('数据库连接已释放');
+});
 
 // 添加连接池事件监听
 pool.on('acquire', function (connection) {
@@ -70,22 +79,17 @@ async function executeQuery(sql, params = []) {
 
 // 测试数据库连接
 async function testConnection() {
-    let connection;
     try {
         console.log('测试数据库连接...');
-        connection = await pool.getConnection();
-        console.log('数据库连接成功 | 连接ID:', connection.threadId);
+        const connection = await pool.getConnection();
+        console.log('数据库连接成功');
+        connection.release();
     } catch (error) {
         console.error('数据库连接失败:', error);
-        if (error.code === 'ER_CON_COUNT_ERROR') {
-            console.log('连接数过多，30秒后重试连接...');
-            setTimeout(testConnection, 30000);
-        }
     } finally {
-        if (connection) {
-            console.log('测试完成，释放连接 | 连接ID:', connection.threadId);
-            connection.release();
-        }
+        // 使用 pool.getConnection 获取连接数
+        const [rows] = await pool.query('SHOW STATUS LIKE "Threads_connected"');
+        console.log('当前数据库连接数:', rows[0].Value);
     }
 }
 
@@ -112,15 +116,15 @@ process.on('SIGINT', async () => {
     }
 });
 
-// 定期打印连接池状态
-setInterval(() => {
-    const poolStatus = {
-        total: pool.pool._allConnections.length,
-        active: pool.pool._allConnections.length - pool.pool._freeConnections.length,
-        idle: pool.pool._freeConnections.length,
-    };
-    console.log('连接池状态:', poolStatus);
-}, 30000); // 每30秒打印一次
+// 定期检查连接池状态
+setInterval(async () => {
+    try {
+        const [rows] = await pool.query('SHOW STATUS LIKE "Threads_connected"');
+        console.log('当前数据库连接数:', rows[0].Value);
+    } catch (error) {
+        console.error('检查连接池状态失败:', error);
+    }
+}, 30000); // 每30秒检查一次
 
 testConnection();
 
@@ -134,6 +138,17 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+// 确保在每个请求完成后释放连接
+app.use((req, res, next) => {
+    req.on('end', () => {
+        if (req.dbConnection) {
+            req.dbConnection.release();
+            console.log('请求结束，释放数据库连接');
+        }
+    });
+    next();
+});
 
 // 获取所有链接
 app.get('/api/links/all', async (req, res) => {
@@ -167,12 +182,18 @@ app.get('/api/links/:category', async (req, res) => {
 
 // 获取所有分类
 app.get('/api/categories', async (req, res) => {
+    console.log('正在获取所有分类...');
     try {
-        console.log('正在获取所有分类...');
-        const results = await executeQuery('SELECT DISTINCT category FROM links ORDER BY category');
-        const categories = results.map(row => row.category);
-        console.log('获取到的分类:', categories);
-        res.json(categories);
+        console.log('正在获取数据库连接...');
+        const connection = await pool.getConnection();
+        console.log('成功获取数据库连接');
+        try {
+            const [rows] = await connection.query('SELECT DISTINCT category FROM links ORDER BY category');
+            res.json(rows.map(row => row.category));
+        } finally {
+            console.log('释放数据库连接');
+            connection.release();
+        }
     } catch (error) {
         console.error('获取分类失败:', error);
         res.status(500).json({ error: '获取分类失败' });
@@ -557,6 +578,56 @@ app.put('/api/links/:id', async (req, res) => {
     } catch (error) {
         console.error('更新链接失败:', error);
         res.status(500).json({ error: '服务器错误' });
+    }
+});
+
+// 更新分类名称
+app.put('/api/categories/:oldCategory', async (req, res) => {
+    console.log('更新分类请求:', {
+        oldCategory: req.params.oldCategory,
+        newCategory: req.body.newCategory
+    });
+    
+    try {
+        const { oldCategory } = req.params;
+        const { newCategory } = req.body;
+        
+        if (!newCategory) {
+            return res.status(400).json({ error: '新分类名称不能为空' });
+        }
+        
+        // 开始事务
+        const connection = await pool.getConnection();
+        await connection.beginTransaction();
+        
+        try {
+            console.log('开始更新分类...');
+            
+            // 更新链接表中的分类
+            const [updateResult] = await connection.query(
+                'UPDATE links SET category = ? WHERE category = ?',
+                [newCategory, oldCategory]
+            );
+            console.log('更新链接结果:', updateResult);
+            
+            // 提交事务
+            await connection.commit();
+            console.log('事务提交成功');
+            
+            res.json({ message: '分类更新成功' });
+        } catch (error) {
+            console.error('更新分类事务失败:', error);
+            // 回滚事务
+            await connection.rollback();
+            res.status(500).json({ error: '更新分类失败: ' + error.message });
+        } finally {
+            // 释放连接
+            connection.release();
+            console.log('数据库连接已释放');
+        }
+    } catch (error) {
+        console.error('更新分类失败:', error);
+        res.status(500).json({ error: '处理更新分类请求失败: ' + error.message });
     }
 });
 
