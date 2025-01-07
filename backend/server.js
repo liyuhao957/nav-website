@@ -182,16 +182,25 @@ app.get('/api/links/:category', async (req, res) => {
 
 // 获取所有分类
 app.get('/api/categories', async (req, res) => {
-    console.log('正在获取所有分类...');
     try {
-        console.log('正在获取数据库连接...');
         const connection = await pool.getConnection();
-        console.log('成功获取数据库连接');
         try {
-            const [rows] = await connection.query('SELECT DISTINCT category FROM links ORDER BY category');
+            const sort = req.query.sort || 'desc';
+            const orderBy = sort === 'desc' ? 'DESC' : 'ASC';
+            
+            // 直接按照 id 排序（假设 id 是时间戳）
+            const [rows] = await connection.query(`
+                SELECT DISTINCT category, MIN(id) as first_id
+                FROM links
+                GROUP BY category
+                ORDER BY first_id ${orderBy}
+            `);
+            
+            console.log('排序方向:', orderBy);
+            console.log('查询结果:', rows);
+            
             res.json(rows.map(row => row.category));
         } finally {
-            console.log('释放数据库连接');
             connection.release();
         }
     } catch (error) {

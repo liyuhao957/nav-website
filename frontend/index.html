@@ -768,6 +768,42 @@
         .links-header {
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
+
+        .sort-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 15px;
+        }
+
+        .sort-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            background: #f8f9fa;
+        }
+
+        .sort-button:hover {
+            background: #e9ecef;
+        }
+
+        .sort-button.desc .sort-icon {
+            transform: rotate(180deg);
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
     </style>
 </head>
 <body>
@@ -782,87 +818,92 @@
     </div>
 
     <div class="main-wrapper">
-        <h1>TC</h1>
+    <h1>TC</h1>
 
         <!-- 主要内容区域 -->
         <div class="content-grid">
             <!-- 左侧链接列表 -->
             <div class="links-section">
                 <div class="links-header">
-        <div class="search-container">
+    <div class="search-container">
                         <input type="text" class="search-input" placeholder="搜索链接...">
-            <div class="search-options">
-                <div class="radio-group">
-                    <label class="radio-label">
-                        <input type="radio" name="search-engine" value="baidu" checked>
-                        百度
-                    </label>
-                    <label class="radio-label">
-                        <input type="radio" name="search-engine" value="google">
+        <div class="search-options">
+            <div class="radio-group">
+                <label class="radio-label">
+                    <input type="radio" name="search-engine" value="baidu" checked>
+                    百度
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="search-engine" value="google">
                                     谷歌
-                    </label>
-                </div>
+                </label>
             </div>
+                        </div>
                         <button class="search-button" onclick="searchLinks()">搜索</button>
-        </div>
+                    </div>
                 </div>
                 <div class="section-header">
                     <h2 class="section-title">链接列表</h2>
-                    <div class="category-filter">
-                        <select id="categoryFilter" class="category-select" onchange="filterLinksByCategory(this.value)">
-                            <option value="all">显示所有分类</option>
-                        </select>
-                            </div>
+                    <div class="header-controls">
+                        <button class="sort-button" onclick="toggleCategorySort()">
+                            <span class="sort-icon">↓</span>
+                        </button>
+                        <div class="category-filter">
+                            <select id="categoryFilter" onchange="handleCategoryFilterChange(this.value)">
+                                <option value="all">显示所有分类</option>
+                            </select>
                         </div>
-                <div class="links-container">
-                    <!-- 链接列表将通过JavaScript动态生成 -->
                     </div>
-            </div>
+                </div>
+                <div id="linksContainer" class="links-container">
+                    <!-- 链接列表将通过 JavaScript 动态生成 -->
+        </div>
+    </div>
 
             <!-- 右侧工具栏 -->
             <div class="tools-section">
                 <!-- 添加分类 -->
-                <div class="section">
-                    <h2 class="section-title">添加新分类</h2>
+    <div class="section">
+        <h2 class="section-title">添加新分类</h2>
                     <div class="category-form">
                         <input type="text" class="category-input" id="categoryInput" placeholder="请输入分类名称...">
                         <button class="add-button" onclick="categoryManager.addCategory()">创建分类</button>
                     </div>
-                </div>
+    </div>
 
                 <!-- 添加链接 -->
-                <div class="section">
-                    <h2 class="section-title">添加新链接</h2>
+    <div class="section">
+        <h2 class="section-title">添加新链接</h2>
                     <div class="link-form">
                         <div class="form-group">
                             <label>选择分类</label>
                             <select id="categorySelect" class="category-select">
-                                <option value="" disabled selected>请选择分类...</option>
-                            </select>
-                        </div>
+                    <option value="" disabled selected>请选择分类...</option>
+                </select>
+            </div>
                         <div class="form-group">
-                            <label for="titleInput">网站名称</label>
-                            <input type="text" id="titleInput" class="title-input" placeholder="请输入网站名称...">
-                        </div>
+                <label for="titleInput">网站名称</label>
+                <input type="text" id="titleInput" class="title-input" placeholder="请输入网站名称...">
+            </div>
                         <div class="form-group">
-                            <label for="urlInput">网站地址</label>
-                            <input type="url" id="urlInput" class="url-input" placeholder="请输入网站地址...">
-                        </div>
+                <label for="urlInput">网站地址</label>
+                <input type="url" id="urlInput" class="url-input" placeholder="请输入网站地址...">
+            </div>
                         <div class="form-group">
-                            <label for="descriptionInput">简短描述</label>
-                            <input type="text" id="descriptionInput" class="description-input" placeholder="请输入简短描述...">
-                        </div>
+                <label for="descriptionInput">简短描述</label>
+                <input type="text" id="descriptionInput" class="description-input" placeholder="请输入简短描述...">
+            </div>
                         <button class="add-link-button" onclick="linkManager.addLink()">添加链接</button>
-                    </div>
-                </div>
+        </div>
+    </div>
 
                 <!-- 工具箱 -->
-                <div class="section">
+    <div class="section">
                     <h2 class="section-title">工具箱</h2>
-                    <div class="action-buttons">
-                        <button class="action-button" onclick="importLinks()">导入链接</button>
-                        <button class="action-button" onclick="exportLinks()">导出链接</button>
-                        <button class="action-button" onclick="checkLinks()">检查链接</button>
+            <div class="action-buttons">
+                <button class="action-button" onclick="importLinks()">导入链接</button>
+                <button class="action-button" onclick="exportLinks()">导出链接</button>
+                <button class="action-button" onclick="checkLinks()">检查链接</button>
                     </div>
                 </div>
             </div>
@@ -963,21 +1004,21 @@
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     return await response.json();
-                } catch (error) {
+            } catch (error) {
                     console.error('API请求失败:', error);
                     this.showToast(error.message, 'error');
                     throw error;
-                }
             }
+        }
         };
 
         // 链接管理
         const linkManager = {
             async addLink() {
-                const category = document.getElementById('categorySelect').value;
-                const title = document.getElementById('titleInput').value.trim();
-                const url = document.getElementById('urlInput').value.trim();
-                const description = document.getElementById('descriptionInput').value.trim();
+            const category = document.getElementById('categorySelect').value;
+            const title = document.getElementById('titleInput').value.trim();
+            const url = document.getElementById('urlInput').value.trim();
+            const description = document.getElementById('descriptionInput').value.trim();
 
                 if (!this.validateLinkInput(category, title, url)) return;
 
@@ -997,15 +1038,15 @@
             },
 
             validateLinkInput(category, title, url) {
-                if (!category) {
+            if (!category) {
                     utils.showToast('请选择分类', 'error');
                     return false;
-                }
-                if (!title) {
+            }
+            if (!title) {
                     utils.showToast('请输入网站名称', 'error');
                     return false;
-                }
-                if (!url) {
+            }
+            if (!url) {
                     utils.showToast('请输入网站地址', 'error');
                     return false;
                 }
@@ -1031,13 +1072,13 @@
                 
                 if (!category) {
                     utils.showToast('请输入分类名称', 'error');
-                    return;
-                }
+                return;
+            }
 
-                try {
+            try {
                     await utils.fetchAPI(`${baseUrl}/api/categories`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ category })
                     });
 
@@ -1071,12 +1112,13 @@
         async function loadCategories() {
             try {
                 console.log('开始加载分类...');
-                const response = await fetch('http://localhost:3000/api/categories');
+                console.log('当前排序方向:', isCategoryDescSort ? 'desc' : 'asc');
+                const response = await fetch(`${baseUrl}/api/categories?sort=${isCategoryDescSort ? 'desc' : 'asc'}`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const categories = await response.json();
-                console.log('获取到的分类:', categories);
+                console.log('获取到的分类(排序后):', categories);
                 
                 // 更新分类过滤器
                 const categoryFilter = document.getElementById('categoryFilter');
@@ -1086,9 +1128,9 @@
                     
                     // 添加分类选项
                     categories.forEach(category => {
-                        const option = document.createElement('option');
-                        option.value = category;
-                        option.textContent = category;
+                    const option = document.createElement('option');
+                    option.value = category;
+                    option.textContent = category;
                         categoryFilter.appendChild(option);
                     });
                 }
@@ -1097,7 +1139,7 @@
                 const categorySelect = document.getElementById('categorySelect');
                 if (categorySelect) {
                     categorySelect.innerHTML = '<option value="" disabled selected>请选择分类...</option>';
-                    categories.forEach(category => {
+                categories.forEach(category => {
                         const option = document.createElement('option');
                         option.value = category;
                         option.textContent = category;
@@ -1236,8 +1278,13 @@
                     linksByCategory[link.category].push(link);
                 });
 
+                // 获取排序后的分类列表
+                const categoriesResponse = await fetch(`${baseUrl}/api/categories?sort=${isCategoryDescSort ? 'desc' : 'asc'}`);
+                const sortedCategories = await categoriesResponse.json();
+
                 // 按分类显示链接
-                Object.entries(linksByCategory).forEach(([category, categoryLinks]) => {
+                sortedCategories.forEach(category => {
+                    const categoryLinks = linksByCategory[category] || [];
                     const categorySection = document.createElement('div');
                     categorySection.className = 'category-section';
                     categorySection.innerHTML = `
@@ -1246,20 +1293,20 @@
                             <div class="category-actions">
                                 <button class="category-edit-button" onclick="editCategory('${category}')">编辑</button>
                                 <button class="category-delete-button" onclick="deleteCategory('${category}')">删除</button>
-                                </div>
+                            </div>
                         </h3>
                     `;
 
-                const linksList = document.createElement('div');
-                linksList.className = 'links-list';
-                
-                categoryLinks.forEach(link => {
+                    const linksList = document.createElement('div');
+                    linksList.className = 'links-list';
+                    
+                    categoryLinks.forEach(link => {
                         linksList.appendChild(createLinkItem(link));
+                    });
+                    
+                    categorySection.appendChild(linksList);
+                    linksContainer.appendChild(categorySection);
                 });
-                
-                categorySection.appendChild(linksList);
-                linksContainer.appendChild(categorySection);
-            });
             } catch (error) {
                 console.error('加载链接失败:', error);
                 showToast('加载链接失败: ' + error.message, 'error');
@@ -1389,11 +1436,11 @@
                     <div class="edit-form-group">
                         <label for="editTitle">网站名称</label>
                         <input type="text" id="editTitle" value="${title}">
-                    </div>
+                            </div>
                     <div class="edit-form-group">
                         <label for="editUrl">网站地址</label>
                         <input type="url" id="editUrl" value="${url}">
-                    </div>
+                        </div>
                     <div class="edit-form-group">
                         <label for="editDescription">简短描述</label>
                         <input type="text" id="editDescription" value="${description}">
@@ -1427,7 +1474,7 @@
                     },
                     body: JSON.stringify({ title, url, description })
                 });
-
+                
                 if (!response.ok) {
                     const data = await response.json();
                     throw new Error(data.error || '更新失败');
@@ -1534,12 +1581,12 @@
             linksContainer.innerHTML = '';
             
             if (!links || links.length === 0) {
-                const emptyMessage = document.createElement('div');
-                emptyMessage.className = 'empty-message';
+                    const emptyMessage = document.createElement('div');
+                    emptyMessage.className = 'empty-message';
                 emptyMessage.textContent = '暂无链接';
                 linksContainer.appendChild(emptyMessage);
-                return;
-            }
+                    return;
+                }
 
             // 如果是显示所有分类，按分类组织链接
             if (category === 'all') {
@@ -1579,16 +1626,16 @@
 
         // 创建链接项
         function createLinkItem(link) {
-            const linkItem = document.createElement('div');
-            linkItem.className = 'link-item';
-            linkItem.innerHTML = `
-                <div class="link-content">
-                    <img src="${link.favicon || defaultFavicon}" class="link-favicon" alt="favicon" onerror="this.src='${defaultFavicon}'">
-                    <div class="link-info">
+                        const linkItem = document.createElement('div');
+                        linkItem.className = 'link-item';
+                        linkItem.innerHTML = `
+                            <div class="link-content">
+                                <img src="${link.favicon || defaultFavicon}" class="link-favicon" alt="favicon" onerror="this.src='${defaultFavicon}'">
+                                <div class="link-info">
                         <a href="${link.url}" target="_blank" class="link-title" onclick="recordVisit('${link.id}')">${link.title}</a>
-                        <div class="link-description">${link.description || ''}</div>
-                    </div>
-                </div>
+                                    <div class="link-description">${link.description || ''}</div>
+                                </div>
+                            </div>
                 <div class="link-actions">
                     <button class="edit-button" onclick="editLink('${link.id}', '${link.title}', '${link.url}', '${link.description || ''}')">编辑</button>
                     <button class="delete-button" onclick="deleteLink('${link.id}')">删除</button>
@@ -1647,7 +1694,7 @@
                 const response = await fetch(`${baseUrl}/api/categories/${encodeURIComponent(category)}`, {
                     method: 'DELETE'
                 });
-
+                
                 if (!response.ok) {
                     throw new Error('删除分类失败');
                 }
@@ -1714,10 +1761,11 @@
                 divider.className = 'category-nav-divider';
                 nav.appendChild(divider);
 
-                // 获取分类列表
-                const response = await fetch(`${baseUrl}/api/categories`);
+                // 获取分类列表（修改这部分以使用排序参数）
+                const response = await fetch(`${baseUrl}/api/categories?sort=${isCategoryDescSort ? 'desc' : 'asc'}`);
                 if (!response.ok) throw new Error('获取分类失败');
                 const categories = await response.json();
+                console.log('侧边栏获取到的排序分类:', categories);
 
                 // 为每个分类创建导航项
                 for (const category of categories) {
@@ -1828,6 +1876,80 @@
               showToast('加载分类导航失败: ' + error.message, 'error');
           }
       }
-  </script>
+
+      // 添加排序状态变量
+      let isCategoryDescSort = true; // 默认降序（最新创建的在前）
+
+      // 切换分类排序
+      function toggleCategorySort() {
+          isCategoryDescSort = !isCategoryDescSort;
+          const sortButton = document.querySelector('.sort-button');
+          if (sortButton) {
+              sortButton.classList.toggle('desc', isCategoryDescSort);
+          }
+          reloadCategoriesWithSort(); // 使用新函数重新加载分类
+      }
+
+      // 添加新函数处理分类重新加载和显示
+      async function reloadCategoriesWithSort() {
+          try {
+              console.log('开始重新加载分类...');
+              console.log('当前排序方向:', isCategoryDescSort ? 'desc' : 'asc');
+              
+              // 获取分类数据
+              const response = await fetch(`${baseUrl}/api/categories?sort=${isCategoryDescSort ? 'desc' : 'asc'}`);
+              if (!response.ok) {
+                  throw new Error(`HTTP error! status: ${response.status}`);
+              }
+              const categories = await response.json();
+              console.log('获取到的分类(排序后):', categories);
+              
+              // 先更新侧边栏导航
+              await updateSidebarNav();
+              
+              // 更新分类过滤器
+              const categoryFilter = document.getElementById('categoryFilter');
+              if (categoryFilter) {
+                  // 保存当前选中的值
+                  const currentValue = categoryFilter.value;
+                  
+                  // 更新选项
+                  categoryFilter.innerHTML = '<option value="all">显示所有分类</option>';
+                  categories.forEach(category => {
+                      const option = document.createElement('option');
+                      option.value = category;
+                      option.textContent = category;
+                      categoryFilter.appendChild(option);
+                  });
+                  
+                  // 恢复之前选中的值
+                  categoryFilter.value = currentValue;
+              }
+              
+              // 更新添加链接表单的分类选择器
+              const categorySelect = document.getElementById('categorySelect');
+              if (categorySelect) {
+                  const currentValue = categorySelect.value;
+                  categorySelect.innerHTML = '<option value="" disabled selected>请选择分类...</option>';
+                  categories.forEach(category => {
+                      const option = document.createElement('option');
+                      option.value = category;
+                      option.textContent = category;
+                      categorySelect.appendChild(option);
+                  });
+                  if (currentValue) categorySelect.value = currentValue;
+              }
+              
+              // 重新加载当前显示的链接
+              const currentCategory = categoryFilter ? categoryFilter.value : 'all';
+              await loadLinks(currentCategory);
+              
+              showToast(`分类已${isCategoryDescSort ? '降序' : '升序'}排列`);
+          } catch (error) {
+              console.error('重新加载分类失败:', error);
+              showToast('重新加载分类失败: ' + error.message, 'error');
+          }
+      }
+    </script>
 </body>
 </html> 
