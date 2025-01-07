@@ -34,7 +34,7 @@
             padding: 20px;
             border-radius: 0;
             box-shadow: none;
-            margin-bottom: 20px;
+            margin-bottom: 0;
             display: flex;
             gap: 15px;
             align-items: center;
@@ -106,19 +106,37 @@
             padding: 15px 20px;
             background: white;
             border-bottom: 2px solid #f0f0f0;
-            margin: -20px -20px 20px -20px;
-            border-radius: 10px 10px 0 0;
+            margin: 0;
+            position: sticky;
+            top: 84px;  /* 搜索框的高度 + padding */
+            z-index: 99;
         }
 
         .section-title {
-            font-size: 24px;
+            font-size: 20px;
             color: #2c3e50;
             font-weight: 600;
             margin: 0;
+            padding-left: 10px;
         }
 
-        .category-filter {
-            min-width: 200px;
+        .category-filter select {
+            width: 200px;
+            padding: 12px 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #2c3e50;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            height: 45px;
+        }
+
+        .category-filter select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
         }
 
         .category-select {
@@ -148,7 +166,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-bottom: 15px;
+            padding: 15px 10px;
             margin-bottom: 15px;
             border-bottom: 2px solid #f0f0f0;
         }
@@ -157,6 +175,13 @@
             font-size: 20px;
             color: #2c3e50;
             font-weight: 600;
+        }
+
+        .category-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            height: 100%;
         }
 
         .links-list {
@@ -680,6 +705,42 @@
 
         .category-delete-button:hover {
             background: #ff1111;
+        }
+
+        .links-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: white;
+        }
+
+        .search-container {
+            background: white;
+            padding: 20px;
+            border-radius: 0;
+            box-shadow: none;
+            margin-bottom: 0;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: white;
+            border-bottom: 2px solid #f0f0f0;
+            margin: 0;
+            position: sticky;
+            top: 84px;  /* 搜索框的高度 + padding */
+            z-index: 99;
+        }
+
+        /* 添加一个小阴影效果，让固定头部更加明显 */
+        .links-header {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
     </style>
 </head>
