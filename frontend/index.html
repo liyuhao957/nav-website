@@ -24,17 +24,16 @@
             display: grid;
             grid-template-columns: 1fr 350px;
             gap: 30px;
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
+            margin: 0;
+            padding: 0 0 0 30px;
         }
 
         /* 搜索区域样式 */
         .search-container {
             background: white;
             padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 0;
+            box-shadow: none;
             margin-bottom: 20px;
             display: flex;
             gap: 15px;
@@ -95,8 +94,8 @@
         /* 链接列表区域样式 */
         .links-section {
             background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 0;
+            box-shadow: none;
             padding: 20px;
         }
 
@@ -176,7 +175,7 @@
             flex-direction: column;
             transition: all 0.3s ease;
             width: fit-content;  /* 根据内容自适应宽度 */
-            min-width: 100px;  /* 最小宽度 */
+            min-width: 150px;  /* 最小宽度 */
         }
 
         .link-item:hover {
@@ -470,7 +469,7 @@
             width: 250px;
             background: white;
             box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-            padding: 20px;
+            padding: 0;
             overflow-y: auto;
             z-index: 1000;
             transform: translateX(0);
@@ -507,7 +506,7 @@
         /* 主要内容区域样式 */
         .main-wrapper {
             margin-left: 250px;
-            padding: 30px;
+            padding: 0;
             transition: margin-left 0.3s ease;
         }
 
@@ -520,7 +519,7 @@
             font-size: 36px;
             color: #2c3e50;
             text-align: center;
-            margin: 30px 0;
+            margin: 15px 0;
             font-weight: 700;
         }
 
