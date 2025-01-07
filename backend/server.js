@@ -11,22 +11,116 @@ const dbConfig = {
     host: process.env.MYSQL_HOST || '159.75.107.196',
     user: process.env.MYSQL_USER || 'root',
     password: process.env.MYSQL_PASSWORD || 'debezium',
-    database: process.env.MYSQL_DATABASE || 'nav_website'
+    database: process.env.MYSQL_DATABASE || 'nav_website',
+    waitForConnections: true,
+    connectionLimit: 2,
+    queueLimit: 0,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 0
 };
 
 // 创建数据库连接池
 const pool = mysql.createPool(dbConfig);
 
-// 测试数据库连接
-async function testConnection() {
+// 添加连接池事件监听
+pool.on('acquire', function (connection) {
+    console.log('连接已获取 | 连接ID:', connection.threadId);
+});
+
+pool.on('connection', function (connection) {
+    console.log('新连接已创建 | 连接ID:', connection.threadId);
+});
+
+pool.on('release', function (connection) {
+    console.log('连接已释放 | 连接ID:', connection.threadId);
+});
+
+pool.on('enqueue', function () {
+    console.log('等待可用连接...');
+});
+
+// 添加错误处理
+pool.on('error', (err) => {
+    console.error('数据库池错误:', err);
+    if (err.code === 'PROTOCOL_CONNECTION_LOST') {
+        console.log('数据库连接断开，正在重新连接...');
+        testConnection();
+    }
+});
+
+// 封装数据库查询函数
+async function executeQuery(sql, params = []) {
+    let connection;
     try {
-        const connection = await pool.getConnection();
-        console.log('数据库连接成功');
-        connection.release();
+        console.log('正在获取数据库连接...');
+        connection = await pool.getConnection();
+        console.log(`执行查询 | 连接ID: ${connection.threadId} | SQL: ${sql}`);
+        const [results] = await connection.query(sql, params);
+        return results;
     } catch (error) {
-        console.error('数据库连接失败:', error);
+        console.error('数据库查询错误:', error);
+        throw error;
+    } finally {
+        if (connection) {
+            console.log(`查询完成，释放连接 | 连接ID: ${connection.threadId}`);
+            connection.release();
+        }
     }
 }
+
+// 测试数据库连接
+async function testConnection() {
+    let connection;
+    try {
+        console.log('测试数据库连接...');
+        connection = await pool.getConnection();
+        console.log('数据库连接成功 | 连接ID:', connection.threadId);
+    } catch (error) {
+        console.error('数据库连接失败:', error);
+        if (error.code === 'ER_CON_COUNT_ERROR') {
+            console.log('连接数过多，30秒后重试连接...');
+            setTimeout(testConnection, 30000);
+        }
+    } finally {
+        if (connection) {
+            console.log('测试完成，释放连接 | 连接ID:', connection.threadId);
+            connection.release();
+        }
+    }
+}
+
+// 标记连接池状态
+let isPoolClosing = false;
+
+// 在应用退出时清理连接池
+process.on('SIGINT', async () => {
+    if (isPoolClosing) {
+        console.log('连接池已经在关闭中...');
+        return;
+    }
+    
+    console.log('应用正在关闭，清理连接池...');
+    isPoolClosing = true;
+    
+    try {
+        await pool.end();
+        console.log('连接池已成功关闭');
+        process.exit(0);
+    } catch (error) {
+        console.error('关闭连接池时出错:', error);
+        process.exit(1);
+    }
+});
+
+// 定期打印连接池状态
+setInterval(() => {
+    const poolStatus = {
+        total: pool.pool._allConnections.length,
+        active: pool.pool._allConnections.length - pool.pool._freeConnections.length,
+        idle: pool.pool._freeConnections.length,
+    };
+    console.log('连接池状态:', poolStatus);
+}, 30000); // 每30秒打印一次
 
 testConnection();
 
@@ -41,15 +135,46 @@ app.use(cors({
 
 app.use(express.json());
 
+// 获取所有链接
+app.get('/api/links/all', async (req, res) => {
+    try {
+        const rows = await executeQuery('SELECT * FROM links ORDER BY category, title');
+        res.json(rows);
+    } catch (error) {
+        console.error('获取所有链接失败:', error);
+        res.status(500).json({ error: '获取所有链接失败' });
+    }
+});
+
+// 获取指定分类的所有链接
+app.get('/api/links/:category', async (req, res) => {
+    try {
+        if (req.params.category === 'all') {
+            const rows = await executeQuery('SELECT * FROM links ORDER BY category, title');
+            return res.json(rows);
+        }
+        
+        const rows = await executeQuery(
+            'SELECT * FROM links WHERE category = ? ORDER BY title',
+            [req.params.category]
+        );
+        res.json(rows);
+    } catch (error) {
+        console.error('获取链接失败:', error);
+        res.status(500).json({ error: '获取链接失败' });
+    }
+});
+
 // 获取所有分类
 app.get('/api/categories', async (req, res) => {
     try {
-        const [rows] = await pool.query(
-            'SELECT DISTINCT category FROM links'
-        );
-        const categories = rows.map(row => row.category);
+        console.log('正在获取所有分类...');
+        const results = await executeQuery('SELECT DISTINCT category FROM links ORDER BY category');
+        const categories = results.map(row => row.category);
+        console.log('获取到的分类:', categories);
         res.json(categories);
     } catch (error) {
+        console.error('获取分类失败:', error);
         res.status(500).json({ error: '获取分类失败' });
     }
 });
@@ -64,7 +189,7 @@ app.post('/api/categories', async (req, res) => {
         }
         
         // 检查分类是否已存在
-        const [existing] = await pool.query(
+        const existing = await executeQuery(
             'SELECT category FROM links WHERE category = ? LIMIT 1',
             [category]
         );
@@ -74,7 +199,7 @@ app.post('/api/categories', async (req, res) => {
         }
         
         // 创建一个空链接来保存新分类
-        const [result] = await pool.query(
+        await executeQuery(
             'INSERT INTO links (id, category, title, url) VALUES (?, ?, ?, ?)',
             [Date.now().toString(), category, '分类占位', 'http://example.com']
         );
@@ -89,23 +214,10 @@ app.post('/api/categories', async (req, res) => {
 // 获取所有链接
 app.get('/api/all-links', async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT * FROM links');
+        const rows = await executeQuery('SELECT * FROM links');
         res.json(rows);
     } catch (error) {
         res.status(500).json({ error: '获取所有链接失败' });
-    }
-});
-
-// 获取指定分类的所有链接
-app.get('/api/links/:category', async (req, res) => {
-    try {
-        const [rows] = await pool.query(
-            'SELECT * FROM links WHERE category = ?',
-            [req.params.category]
-        );
-        res.json(rows);
-    } catch (error) {
-        res.status(500).json({ error: '获取链接失败' });
     }
 });
 
@@ -130,16 +242,16 @@ app.post('/api/links', async (req, res) => {
         }
         
         const favicon = await getFavicon(formattedUrl);
-        const id = Date.now().toString(); // 生成一个ID并保存下来重用
+        const id = Date.now().toString();
         
-        const [result] = await pool.query(
+        await executeQuery(
             'INSERT INTO links (id, category, title, url, description, favicon) VALUES (?, ?, ?, ?, ?, ?)',
             [id, category, title, formattedUrl, description, favicon]
         );
         
-        const [newLink] = await pool.query(
+        const newLink = await executeQuery(
             'SELECT * FROM links WHERE id = ?',
-            [id]  // 使用保存的ID
+            [id]
         );
         
         res.json({ message: '链接添加成功', link: newLink[0] });
@@ -151,7 +263,7 @@ app.post('/api/links', async (req, res) => {
 // 删除链接
 app.delete('/api/links/:id', async (req, res) => {
     try {
-        const [result] = await pool.query(
+        const result = await executeQuery(
             'DELETE FROM links WHERE id = ?',
             [req.params.id]
         );
@@ -169,7 +281,7 @@ app.delete('/api/links/:id', async (req, res) => {
 // 获取最近访问记录
 app.get('/api/recent-visits', async (req, res) => {
     try {
-        const [rows] = await pool.query(
+        const rows = await executeQuery(
             'SELECT * FROM links WHERE lastVisited IS NOT NULL ORDER BY lastVisited DESC LIMIT 10'
         );
         res.json(rows);
@@ -181,7 +293,7 @@ app.get('/api/recent-visits', async (req, res) => {
 // 更新访问记录
 app.post('/api/visit/:id', async (req, res) => {
     try {
-        const [result] = await pool.query(
+        const result = await executeQuery(
             'UPDATE links SET lastVisited = NOW(), visitCount = visitCount + 1 WHERE id = ?',
             [req.params.id]
         );
@@ -200,7 +312,7 @@ app.post('/api/visit/:id', async (req, res) => {
 app.get('/api/search', async (req, res) => {
     try {
         const { q } = req.query;
-        const [rows] = await pool.query(
+        const rows = await executeQuery(
             'SELECT * FROM links WHERE title LIKE ? OR description LIKE ? OR category LIKE ?',
             [`%${q}%`, `%${q}%`, `%${q}%`]
         );
@@ -338,21 +450,27 @@ async function getWebsitePreview(url) {
 
 // 辅助函数：检查所有链接的有效性
 async function checkAllLinks() {
+    const batchSize = 5;
     try {
-        const [rows] = await pool.query('SELECT id, url FROM links');
-        for (const link of rows) {
-            try {
-                await axios.head(link.url);
-                await pool.query(
-                    'UPDATE links SET isValid = true WHERE id = ?',
-                    [link.id]
-                );
-            } catch (error) {
-                await pool.query(
-                    'UPDATE links SET isValid = false WHERE id = ?',
-                    [link.id]
-                );
-            }
+        const links = await executeQuery('SELECT id, url FROM links');
+        for (let i = 0; i < links.length; i += batchSize) {
+            const batch = links.slice(i, i + batchSize);
+            await Promise.all(batch.map(async (link) => {
+                try {
+                    await axios.head(link.url);
+                    await executeQuery(
+                        'UPDATE links SET isValid = true WHERE id = ?',
+                        [link.id]
+                    );
+                } catch (error) {
+                    await executeQuery(
+                        'UPDATE links SET isValid = false WHERE id = ?',
+                        [link.id]
+                    );
+                }
+            }));
+            // 每个批次处理完后等待一小段时间
+            await new Promise(resolve => setTimeout(resolve, 1000));
         }
     } catch (error) {
         console.error('检查链接失败:', error);
@@ -360,8 +478,13 @@ async function checkAllLinks() {
 }
 
 // 定时任务：每天凌晨2点检查链接有效性
-cron.schedule('0 2 * * *', () => {
-    checkAllLinks();
+let isCheckingLinks = false;
+cron.schedule('0 2 * * *', async () => {
+    if (!isCheckingLinks) {
+        isCheckingLinks = true;
+        await checkAllLinks();
+        isCheckingLinks = false;
+    }
 });
 
 // 添加在其他路由之前
