@@ -222,22 +222,24 @@
 
         .link-actions {
             display: flex;
+            justify-content: center;
             gap: 10px;
             margin-top: auto;
             padding-top: 10px;
             border-top: 1px solid #f0f0f0;
-            width: 100%;  /* 按钮占满卡片宽度 */
+            width: 100%;  /* 按钮容器占满卡片宽度 */
         }
 
         .edit-button,
         .delete-button {
-            flex: 1;
-            padding: 6px 12px;
+            width: 60px;
+            padding: 6px 0;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-size: 14px;
             transition: all 0.3s ease;
+            text-align: center;
         }
 
         .edit-button {
@@ -291,7 +293,8 @@
         }
 
         .form-group input,
-        .form-group select {
+        .form-group select,
+        .category-input {
             width: 100%;
             padding: 12px;
             border: 2px solid #e1e8ed;
@@ -301,7 +304,8 @@
         }
 
         .form-group input:focus,
-        .form-group select:focus {
+        .form-group select:focus,
+        .category-input:focus {
             outline: none;
             border-color: #007bff;
             box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
@@ -309,15 +313,17 @@
 
         .add-button,
         .add-link-button {
-            width: 100%;
-            padding: 12px;
+            width: 120px;
+            padding: 10px;
             background: #007bff;
             color: white;
             border: none;
             border-radius: 8px;
-            font-size: 16px;
+            font-size: 14px;
             cursor: pointer;
             transition: all 0.3s ease;
+            margin: 0 auto;
+            display: block;
         }
 
         .add-button:hover,
@@ -619,6 +625,61 @@
 
         .edit-dialog-confirm:hover {
             background: #0056b3;
+        }
+
+        /* 工具栏区域样式 */
+        .tools-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .section {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+
+        .category-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .category-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .category-edit-button,
+        .category-delete-button {
+            width: 60px;
+            padding: 6px 0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            text-align: center;
+            color: white;
+        }
+
+        .category-edit-button {
+            background: #4CAF50;
+        }
+
+        .category-edit-button:hover {
+            background: #45a049;
+        }
+
+        .category-delete-button {
+            background: #ff4444;
+        }
+
+        .category-delete-button:hover {
+            background: #ff1111;
         }
     </style>
 </head>
