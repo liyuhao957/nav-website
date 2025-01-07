@@ -188,9 +188,9 @@ app.get('/api/categories', async (req, res) => {
             const sort = req.query.sort || 'desc';
             const orderBy = sort === 'desc' ? 'DESC' : 'ASC';
             
-            // 直接按照 id 排序（假设 id 是时间戳）
+            // 修改查询，确保每个分类只出现一次
             const [rows] = await connection.query(`
-                SELECT DISTINCT category, MIN(id) as first_id
+                SELECT category, MIN(id) as first_id
                 FROM links
                 GROUP BY category
                 ORDER BY first_id ${orderBy}
