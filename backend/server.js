@@ -413,18 +413,55 @@ app.get('/api/preview', async (req, res) => {
 
 // 导入链接
 app.post('/api/import', async (req, res) => {
+    let connection;
     try {
         const { links } = req.body;
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        // 获取当前最大的排序值
+        const [maxOrder] = await connection.query(
+            'SELECT MAX(sort_order) as maxOrder FROM categories'
+        );
+        let currentOrder = maxOrder[0].maxOrder || 0;
+
+        // 处理每个链接
         for (const link of links) {
+            // 检查分类是否存在
+            const [existingCategory] = await connection.query(
+                'SELECT name FROM categories WHERE name = ?',
+                [link.category]
+            );
+
+            // 如果分类不存在，创建新分类
+            if (existingCategory.length === 0) {
+                currentOrder += 1;
+                await connection.query(
+                    'INSERT INTO categories (name, sort_order) VALUES (?, ?)',
+                    [link.category, currentOrder]
+                );
+            }
+
+            // 添加链接
             const favicon = await getFavicon(link.url);
-            await pool.query(
+            await connection.query(
                 'INSERT INTO links (id, category, title, url, description, favicon) VALUES (?, ?, ?, ?, ?, ?)',
                 [Date.now().toString(), link.category, link.title, link.url, link.description, favicon]
             );
         }
+
+        await connection.commit();
         res.json({ message: '链接导入成功' });
     } catch (error) {
+        if (connection) {
+            await connection.rollback();
+        }
+        console.error('导入链接失败:', error);
         res.status(500).json({ error: '导入链接失败' });
+    } finally {
+        if (connection) {
+            connection.release();
+        }
     }
 });
 
@@ -666,25 +703,43 @@ app.put('/api/categories/:oldCategory', async (req, res) => {
         try {
             console.log('开始更新分类...');
             
-            // 更新链接表中的分类
-            const [updateResult] = await connection.query(
+            // 检查新分类名称是否已存在
+            const [existingCategory] = await connection.query(
+                'SELECT name FROM categories WHERE name = ?',
+                [newCategory]
+            );
+            
+            if (existingCategory.length > 0) {
+                await connection.rollback();
+                return res.status(400).json({ error: '该分类名称已存在' });
+            }
+            
+            // 更新 categories 表中的分类名称
+            const [updateCategoryResult] = await connection.query(
+                'UPDATE categories SET name = ? WHERE name = ?',
+                [newCategory, oldCategory]
+            );
+            
+            // 更新 links 表中的分类名称
+            const [updateLinksResult] = await connection.query(
                 'UPDATE links SET category = ? WHERE category = ?',
                 [newCategory, oldCategory]
             );
-            console.log('更新链接结果:', updateResult);
             
             // 提交事务
             await connection.commit();
             console.log('事务提交成功');
             
-            res.json({ message: '分类更新成功' });
+            res.json({ 
+                message: '分类更新成功',
+                categoryUpdated: updateCategoryResult.affectedRows > 0,
+                linksUpdated: updateLinksResult.affectedRows
+            });
         } catch (error) {
             console.error('更新分类事务失败:', error);
-            // 回滚事务
             await connection.rollback();
             res.status(500).json({ error: '更新分类失败: ' + error.message });
         } finally {
-            // 释放连接
             connection.release();
             console.log('数据库连接已释放');
         }

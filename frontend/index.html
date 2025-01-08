@@ -1278,6 +1278,7 @@
                 <div class="section">
                     <h2 class="section-title">工具箱</h2>
                     <div class="action-buttons">
+                        <button class="action-button" onclick="exportTemplate()">导入示例</button>
                         <button class="action-button" onclick="importLinks()">导入链接</button>
                         <button class="action-button" onclick="exportLinks()">导出链接</button>
                         <button class="action-button" onclick="checkLinks()">检查链接</button>
@@ -1945,8 +1946,46 @@
                             });
                             
                             if (response.ok) {
-                                showToast('链接导入成功！');
-                                await loadCategories();
+                                // 等待所有重新加载操作完成
+                                try {
+                                    // 重新加载分类
+                                    await loadCategories();
+                                    // 更新侧边栏导航
+                                    await updateSidebarNav();
+                                    // 重新加载所有链接
+                                    await loadLinks('all');
+                                    // 切换到"显示所有分类"视图
+                                    const allCategoriesHeader = document.querySelector('#categoryNav li:first-child .category-nav-header');
+                                    if (allCategoriesHeader) {
+                                        allCategoriesHeader.click();
+                                    }
+
+                                    // 创建导入结果对话框
+                                    const resultDialog = document.createElement('div');
+                                    resultDialog.className = 'confirm-dialog-overlay';
+                                    resultDialog.style.display = 'flex';
+                                    resultDialog.innerHTML = `
+                                        <div class="confirm-dialog" style="background: #2c3e50; color: white;">
+                                            <div class="confirm-dialog-title" style="color: white; font-size: 22px; border-bottom: 2px solid #34495e; padding-bottom: 15px;">导入结果</div>
+                                            <div class="confirm-dialog-content" style="padding: 20px 0;">
+                                                <p style="font-size: 18px; color: white; margin-bottom: 20px;">导入成功！</p>
+                                                <div style="display: grid; grid-template-columns: auto auto; gap: 10px; margin-bottom: 20px;">
+                                                    <div style="text-align: right; color: #bdc3c7;">导入链接数量:</div>
+                                                    <div style="color: #2ecc71;">${links.length}</div>
+                                                    <div style="text-align: right; color: #bdc3c7;">导入分类:</div>
+                                                    <div style="color: #2ecc71;">${[...new Set(links.map(link => link.category))].join(', ')}</div>
+                                                </div>
+                                            </div>
+                                            <div class="confirm-dialog-buttons" style="border-top: 2px solid #34495e; padding-top: 15px;">
+                                                <button class="confirm-dialog-button confirm-dialog-confirm" style="background: #3498db;" onclick="this.closest('.confirm-dialog-overlay').remove()">确定</button>
+                                            </div>
+                                        </div>
+                                    `;
+                                    document.body.appendChild(resultDialog);
+                                } catch (reloadError) {
+                                    console.error('重新加载数据失败:', reloadError);
+                                    showToast('导入成功，但重新加载数据失败，请刷新页面', 'error');
+                                }
                             } else {
                                 throw new Error('服务器响应错误');
                             }
@@ -2295,8 +2334,14 @@
                     throw new Error(data.error || '更新失败');
                 }
 
+                // 关闭编辑对话框
                 document.querySelector('.edit-dialog-overlay').remove();
-                const currentCategory = document.getElementById('categoryFilter').value;
+
+                // 获取当前选中的分类
+                const selectedOption = document.querySelector('.category-filter .selected-option');
+                const currentCategory = selectedOption.getAttribute('data-value') || 'all';
+
+                // 重新加载链接
                 await loadLinks(currentCategory);
                 showToast('链接更新成功！');
             } catch (error) {
@@ -2354,6 +2399,22 @@
                     nav.querySelectorAll('.category-nav-header').forEach(header => header.classList.remove('active'));
                     allCategoriesLi.querySelector('.category-nav-header').classList.add('active');
 
+                    // 更新分类筛选器的选中状态
+                    const filterSelect = document.querySelector('.category-filter .selected-option');
+                    const filterItems = document.querySelectorAll('.category-filter .dropdown-item');
+                    
+                    // 更新筛选器的显示文本和值
+                    filterSelect.textContent = '显示所有分类';
+                    filterSelect.setAttribute('data-value', 'all');
+                    
+                    // 更新筛选器选项的选中状态
+                    filterItems.forEach(item => {
+                        item.classList.remove('selected');
+                        if (item.getAttribute('data-value') === 'all') {
+                            item.classList.add('selected');
+                        }
+                    });
+
                     if (currentExpandedCategory) {
                         const element = categoryElements.get(currentExpandedCategory);
                         if (element) {
@@ -2361,11 +2422,6 @@
                             element.links.classList.remove('expanded');
                         }
                         currentExpandedCategory = null;
-                    }
-
-                    const categoryFilter = document.getElementById('categoryFilter');
-                    if (categoryFilter) {
-                        categoryFilter.value = 'all';
                     }
 
                     await filterLinksByCategory('all');
@@ -2404,10 +2460,22 @@
                         nav.querySelectorAll('.category-nav-header').forEach(h => h.classList.remove('active'));
                         header.classList.add('active');
 
-                        const categoryFilter = document.getElementById('categoryFilter');
-                        if (categoryFilter) {
-                            categoryFilter.value = category;
-                        }
+                        // 更新分类筛选器的选中状态
+                        const categoryName = header.querySelector('.category-name').textContent;
+                        const filterSelect = document.querySelector('.category-filter .selected-option');
+                        const filterItems = document.querySelectorAll('.category-filter .dropdown-item');
+                        
+                        // 更新筛选器的显示文本和值
+                        filterSelect.textContent = categoryName;
+                        filterSelect.setAttribute('data-value', categoryName);
+                        
+                        // 更新筛选器选项的选中状态
+                        filterItems.forEach(item => {
+                            item.classList.remove('selected');
+                            if (item.getAttribute('data-value') === categoryName) {
+                                item.classList.add('selected');
+                            }
+                        });
 
                         if (currentExpandedCategory === category) {
                             toggle.classList.remove('expanded');
@@ -2500,6 +2568,67 @@
                     }
                 });
             }
+        }
+
+        // 导出模板
+        function exportTemplate() {
+            // 显示说明对话框
+            const instructionDialog = document.createElement('div');
+            instructionDialog.className = 'confirm-dialog-overlay';
+            instructionDialog.style.display = 'flex';
+            instructionDialog.innerHTML = `
+                <div class="confirm-dialog">
+                    <div class="confirm-dialog-title">导入文件格式说明</div>
+                    <div class="confirm-dialog-content">
+                        <p style="margin-bottom: 15px;">JSON文件格式要求：</p>
+                        <ol style="list-style-type: decimal; padding-left: 20px;">
+                            <li style="margin-bottom: 10px;">文件必须是一个数组，包含多个链接对象</li>
+                            <li style="margin-bottom: 10px;">每个链接对象必须包含以下字段：
+                                <ul style="list-style-type: disc; padding-left: 20px; margin-top: 5px;">
+                                    <li>category: 分类名称</li>
+                                    <li>title: 网站名称</li>
+                                    <li>url: 网站地址（支持 http:// 或 https:// 开头）</li>
+                                    <li>description: 网站描述（可选字段）</li>
+                                </ul>
+                            </li>
+                        </ol>
+                        <p style="margin-top: 15px;">点击确定下载示例文件</p>
+                    </div>
+                    <div class="confirm-dialog-buttons">
+                        <button class="confirm-dialog-button confirm-dialog-cancel" onclick="this.closest('.confirm-dialog-overlay').remove()">取消</button>
+                        <button class="confirm-dialog-button confirm-dialog-confirm" onclick="downloadTemplate(this)">确定</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(instructionDialog);
+        }
+
+        // 下载模板文件
+        function downloadTemplate(button) {
+            const template = [
+                {
+                    "category": "示例分类",
+                    "title": "示例网站名称",
+                    "url": "https://example.com",
+                    "description": "这是一个示例描述（可选）"
+                },
+                {
+                    "category": "示例分类2",
+                    "title": "示例网站2",
+                    "url": "https://example2.com",
+                    "description": "这是另一个示例描述"
+                }
+            ];
+
+            const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'links_template.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            button.closest('.confirm-dialog-overlay').remove();
+            showToast('示例文件下载成功！');
         }
     </script>
 </body>
