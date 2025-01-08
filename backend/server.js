@@ -183,26 +183,11 @@ app.get('/api/links/:category', async (req, res) => {
 // 获取所有分类
 app.get('/api/categories', async (req, res) => {
     try {
-        const connection = await pool.getConnection();
-        try {
-            const sort = req.query.sort || 'desc';
-            const orderBy = sort === 'desc' ? 'DESC' : 'ASC';
-            
-            // 修改查询，确保每个分类只出现一次
-            const [rows] = await connection.query(`
-                SELECT category, MIN(id) as first_id
-                FROM links
-                GROUP BY category
-                ORDER BY first_id ${orderBy}
-            `);
-            
-            console.log('排序方向:', orderBy);
-            console.log('查询结果:', rows);
-            
-            res.json(rows.map(row => row.category));
-        } finally {
-            connection.release();
-        }
+        const sort = req.query.sort || 'desc';
+        const [categories] = await pool.query(
+            'SELECT name FROM categories ORDER BY sort_order ' + (sort === 'desc' ? 'DESC' : 'ASC')
+        );
+        res.json(categories.map(category => category.name));
     } catch (error) {
         console.error('获取分类失败:', error);
         res.status(500).json({ error: '获取分类失败' });
@@ -218,23 +203,50 @@ app.post('/api/categories', async (req, res) => {
             return res.status(400).json({ error: '分类名称不能为空' });
         }
         
-        // 检查分类是否已存在
-        const existing = await executeQuery(
-            'SELECT category FROM links WHERE category = ? LIMIT 1',
-            [category]
-        );
+        // 开始事务
+        const connection = await pool.getConnection();
+        await connection.beginTransaction();
         
-        if (existing.length > 0) {
-            return res.status(400).json({ error: '该分类已存在' });
+        try {
+            // 检查分类是否已存在
+            const [existing] = await connection.query(
+                'SELECT name FROM categories WHERE name = ?',
+                [category]
+            );
+            
+            if (existing.length > 0) {
+                await connection.rollback();
+                connection.release();
+                return res.status(400).json({ error: '该分类已存在' });
+            }
+            
+            // 获取当前最大的sort_order
+            const [maxOrder] = await connection.query(
+                'SELECT COALESCE(MAX(sort_order), 0) as maxOrder FROM categories'
+            );
+            const newOrder = maxOrder[0].maxOrder + 1;
+            
+            // 添加到categories表
+            await connection.query(
+                'INSERT INTO categories (name, sort_order) VALUES (?, ?)',
+                [category, newOrder]
+            );
+            
+            // 创建一个空链接来保存新分类
+            await connection.query(
+                'INSERT INTO links (id, category, title, url) VALUES (?, ?, ?, ?)',
+                [Date.now().toString(), category, '分类占位', 'http://example.com']
+            );
+            
+            await connection.commit();
+            connection.release();
+            
+            res.json({ message: '分类添加成功', category });
+        } catch (error) {
+            await connection.rollback();
+            connection.release();
+            throw error;
         }
-        
-        // 创建一个空链接来保存新分类
-        await executeQuery(
-            'INSERT INTO links (id, category, title, url) VALUES (?, ?, ?, ?)',
-            [Date.now().toString(), category, '分类占位', 'http://example.com']
-        );
-        
-        res.json({ message: '分类添加成功', category });
     } catch (error) {
         console.error('添加分类失败:', error);
         res.status(500).json({ error: '添加分类失败' });
@@ -640,7 +652,84 @@ app.put('/api/categories/:oldCategory', async (req, res) => {
     }
 });
 
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-    console.log(`服务器运行在端口 ${port}`);
+// 添加分类重新排序的API端点
+app.post('/api/categories/reorder', async (req, res) => {
+    const { categories } = req.body;
+    
+    if (!Array.isArray(categories) || categories.length === 0) {
+        return res.status(400).json({ error: '无效的分类数组' });
+    }
+
+    try {
+        // 开始事务
+        await pool.query('START TRANSACTION');
+
+        // 更新每个分类的排序
+        for (let i = 0; i < categories.length; i++) {
+            const category = categories[i];
+            const order = categories.length - i; // 倒序，最后一个是1
+            await pool.query(
+                'UPDATE categories SET sort_order = ? WHERE name = ?',
+                [order, category]
+            );
+        }
+
+        // 提交事务
+        await pool.query('COMMIT');
+        
+        res.json({ message: '分类顺序更新成功' });
+    } catch (error) {
+        // 如果出错，回滚事务
+        await pool.query('ROLLBACK');
+        console.error('更新分类顺序失败:', error);
+        res.status(500).json({ error: '更新分类顺序失败' });
+    }
+});
+
+// 添加初始化categories表的函数
+async function initializeCategoriesTable() {
+    try {
+        // 创建categories表
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS categories (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL UNIQUE,
+                sort_order INT DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // 从links表中获取所有唯一的分类
+        const [categories] = await pool.query(`
+            SELECT category, MIN(id) as first_id
+            FROM links 
+            WHERE category IS NOT NULL 
+            GROUP BY category
+            ORDER BY first_id
+        `);
+
+        // 为每个分类创建记录
+        for (let i = 0; i < categories.length; i++) {
+            const category = categories[i].category;
+            await pool.query(
+                'INSERT IGNORE INTO categories (name, sort_order) VALUES (?, ?)',
+                [category, categories.length - i]
+            );
+        }
+
+        console.log('Categories表初始化完成');
+    } catch (error) {
+        console.error('初始化categories表失败:', error);
+        throw error;
+    }
+}
+
+// 在应用启动时初始化表
+testConnection().then(() => {
+    initializeCategoriesTable().then(() => {
+        const port = process.env.PORT || 3000;
+        app.listen(port, () => {
+            console.log(`服务器运行在端口 ${port}`);
+        });
+    });
 }); 

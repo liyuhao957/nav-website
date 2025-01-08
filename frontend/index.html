@@ -6,6 +6,8 @@
     <title>TC</title>
     <!-- 添加网站图标 -->
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <!-- 添加 Sortable.js -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         /* 基础样式重置 */
         * {
@@ -197,6 +199,8 @@
             padding: 15px 10px;
             margin-bottom: 15px;
             border-bottom: 2px solid #f0f0f0;
+            cursor: move; /* 添加移动光标 */
+            user-select: none; /* 防止文本被选中 */
         }
 
         .category-title span {
@@ -806,6 +810,23 @@
             align-items: center;
             gap: 15px;
         }
+
+        .category-ghost {
+            opacity: 0.5;
+            background: #f8f9fa;
+        }
+
+        .category-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: transform 0.15s ease;
+        }
+
+        .categories-container {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -1277,7 +1298,6 @@
                 console.log('筛选分类:', category);
                 const nav = document.getElementById('categoryNav');
                 if (nav) {
-                    // 只更新active状态，不展开分类
                     nav.querySelectorAll('.category-nav-header').forEach(header => 
                         header.classList.remove('active')
                     );
@@ -1318,11 +1338,16 @@
                     const categoriesResponse = await fetch(`${baseUrl}/api/categories?sort=${isCategoryDescSort ? 'desc' : 'asc'}`);
                     const sortedCategories = await categoriesResponse.json();
                     
+                    const categoriesContainer = document.createElement('div');
+                    categoriesContainer.className = 'categories-container';
+                    linksContainer.appendChild(categoriesContainer);
+                    
                     sortedCategories.forEach(cat => {
                         const categoryLinks = linksByCategory[cat] || [];
                         if (categoryLinks.length > 0) {
                             const categorySection = document.createElement('div');
                             categorySection.className = 'category-section';
+                            categorySection.setAttribute('data-category', cat);
                             categorySection.innerHTML = `
                                 <h3 class="category-title">
                                     <span>${cat}</span>
@@ -1340,9 +1365,58 @@
                             });
                             
                             categorySection.appendChild(linksList);
-                            linksContainer.appendChild(categorySection);
+                            categoriesContainer.appendChild(categorySection);
                         }
                     });
+
+                    // 初始化拖拽排序
+                    new Sortable(categoriesContainer, {
+                        animation: 150,
+                        handle: '.category-title',
+                        ghostClass: 'category-ghost',
+                        onEnd: async function(evt) {
+                            const categories = Array.from(categoriesContainer.children).map(
+                                el => el.getAttribute('data-category')
+                            );
+                            try {
+                                const response = await fetch(`${baseUrl}/api/categories/reorder`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({ categories })
+                                });
+                                if (response.ok) {
+                                    // 保存当前展开的分类
+                                    const expandedCategory = currentExpandedCategory;
+                                    
+                                    // 重新加载分类
+                                    await loadCategories();
+                                    await updateSidebarNav();
+                                    
+                                    // 如果之前有展开的分类，重新展开它
+                                    if (expandedCategory) {
+                                        const categoryElement = document.querySelector(`.category-name[data-category="${expandedCategory}"]`)?.closest('.category-nav-item');
+                                        if (categoryElement) {
+                                            const toggle = categoryElement.querySelector('.category-nav-toggle');
+                                            const links = categoryElement.querySelector('.category-nav-links');
+                                            if (toggle && links) {
+                                                toggle.classList.add('expanded');
+                                                links.classList.add('expanded');
+                                                currentExpandedCategory = expandedCategory;
+                                            }
+                                        }
+                                    }
+                                    
+                                    showToast('分类顺序已更新');
+                                }
+                            } catch (error) {
+                                console.error('更新分类顺序失败:', error);
+                                showToast('更新分类顺序失败', 'error');
+                            }
+                        }
+                    });
+                    
                 } else {
                     const categorySection = document.createElement('div');
                     categorySection.className = 'category-section';
