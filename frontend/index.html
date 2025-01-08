@@ -596,8 +596,8 @@
         }
 
         .category-nav-header.active {
-            background: #007bff;
-            color: white;
+            background: #007bff !important;
+            color: white !important;
         }
 
         .category-nav-toggle {
@@ -653,10 +653,42 @@
             z-index: 1000;
             transform: translateX(0);
             transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
         }
 
-        .sidebar.collapsed {
-            transform: translateX(-250px);
+        .nav-links {
+            padding: 15px;
+            border-bottom: 1px solid #e1e8ed;
+            display: flex;
+            gap: 10px;
+            order: -1;  /* 将导航链接移到顶部 */
+        }
+
+        .nav-links a {
+            padding: 8px 15px;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #2c3e50;
+            transition: all 0.3s ease;
+            flex: 1;
+            text-align: center;
+        }
+
+        .nav-links a:hover {
+            background: #f8f9fa;
+        }
+
+        .nav-links a.active {
+            background: #007bff;
+            color: white;
+        }
+
+        .category-nav {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            margin: 0;
         }
 
         .sidebar-toggle {
@@ -1162,6 +1194,252 @@
             width: 100%;
             box-sizing: border-box;
         }
+
+        /* 笔记相关样式 */
+        .notes-container {
+            display: none;
+            padding: 20px;
+        }
+
+        .notes-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .note-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            min-width: 300px;
+            width: 100%;
+            height: auto;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+
+        .note-card h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .note-card .note-content {
+            color: #666;
+            margin-bottom: 10px;
+            overflow-wrap: break-word;  /* 添加长文本换行 */
+            word-wrap: break-word;      /* 兼容性处理 */
+            word-break: break-all;      /* 允许在任意字符间断行 */
+            white-space: pre-wrap;      /* 保留空格和换行符 */
+            flex: 1;
+        }
+
+        .note-card .note-tags {
+            color: #007bff;
+            font-size: 0.9em;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .note-card .note-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .note-card .note-actions button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .note-card .edit-note {
+            background: #28a745;
+            color: white;
+        }
+
+        .note-card .delete-note {
+            background: #dc3545;
+            color: white;
+        }
+
+        @keyframes highlight {
+            0% {
+                background-color: #fff7e6;
+                transform: scale(1.02);
+            }
+            50% {
+                background-color: #fff7e6;
+                transform: scale(1.02);
+            }
+            100% {
+                background-color: white;
+                transform: scale(1);
+            }
+        }
+
+        .note-card[data-note-id] {
+            transition: all 0.3s ease;
+        }
+
+        .note-card .note-content {
+            color: #666;
+            margin-bottom: 10px;
+            max-height: 100px;
+            overflow: hidden;
+        }
+
+        .note-card .note-tags {
+            color: #007bff;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        .highlighted-tag {
+            background-color: #007bff;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            margin: 2px;
+        }
+
+        /* 添加标签搜索相关的样式 */
+        .search-options {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0 15px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 4px;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+
+        .radio-label:hover {
+            background: #e9ecef;
+        }
+
+        .radio-label input[type="radio"] {
+            margin: 0;
+        }
+
+        .note-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .note-actions button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .edit-note {
+            background: #28a745;
+            color: white;
+        }
+
+        .delete-note {
+            background: #dc3545;
+            color: white;
+        }
+
+        .note-form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .note-form textarea {
+            width: 100%;
+            min-height: 100px;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+        }
+
+        .note-form input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .note-form button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .note-form button:hover {
+            background: #0056b3;
+        }
+
+        /* 添加新的样式 */
+        .main-content {
+            flex: 1;
+        }
+
+        .notes-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .tool-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .add-note-button {
+            width: 100%;
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .add-note-button:hover {
+            background: #0056b3;
+        }
     </style>
 </head>
 <body>
@@ -1182,6 +1460,10 @@
         <div class="sidebar-toggle" onclick="toggleSidebar()">
             <i></i>
         </div>
+        <div class="nav-links">
+            <a href="#" class="active" onclick="showLinks()">链接</a>
+            <a href="#" onclick="showNotes()">笔记</a>
+        </div>
         <ul class="category-nav" id="categoryNav">
             <!-- 分类导航将通过 JavaScript 动态生成 -->
         </ul>
@@ -1192,11 +1474,13 @@
 
         <!-- 主要内容区域 -->
         <div class="content-grid">
-            <!-- 左侧链接列表 -->
-            <div class="links-section">
+            <!-- 左侧内容区域 -->
+            <div class="main-content">
+                <!-- 链接管理界面 -->
+                <div id="linksContainer" class="links-section">
                 <div class="links-header">
                     <div class="search-container">
-                        <input type="text" class="search-input" placeholder="搜索链接...">
+                            <input type="text" class="search-input" id="searchInput" placeholder="搜索链接...">
                         <div class="search-options">
                             <div class="radio-group">
                                 <label class="radio-label">
@@ -1219,23 +1503,53 @@
                             <span class="sort-icon">↓</span>
                         </button>
                         <div class="category-filter">
-                            <div class="custom-select" onclick="toggleDropdown(event)">
-                                <div class="selected-option">显示所有分类</div>
-                                <div class="dropdown-menu">
-                                    <div class="dropdown-item selected" data-value="all">显示所有分类</div>
-                                    <!-- 其他选项将通过JavaScript动态添加 -->
-                                </div>
-                            </div>
+                                <div class="custom-select" onclick="toggleDropdown(event)">
+                                    <div class="selected-option">显示所有分类</div>
+                                    <div class="dropdown-menu">
+                                        <div class="dropdown-item selected" data-value="all">显示所有分类</div>
                         </div>
                     </div>
                 </div>
-                <div id="linksContainer" class="links-container">
+                        </div>
+                    </div>
+                    <div class="links-container">
                     <!-- 链接列表将通过 JavaScript 动态生成 -->
+                    </div>
+                </div>
+
+                <!-- 笔记管理界面 -->
+                <div id="notesContainer" class="notes-section" style="display: none;">
+                    <div class="notes-header">
+                        <div class="search-container">
+                            <input type="text" class="search-input" id="noteSearchInput" placeholder="搜索笔记内容...">
+                            <div class="search-options">
+                                <div class="radio-group">
+                                    <label class="radio-label">
+                                        <input type="radio" name="search-type" value="content" checked>
+                                        内容
+                                    </label>
+                                    <label class="radio-label">
+                                        <input type="radio" name="search-type" value="tag">
+                                        标签
+                                    </label>
+                                </div>
+                            </div>
+                            <button class="search-button" onclick="searchNotes()">搜索</button>
+                        </div>
+                    </div>
+                    <div class="section-header">
+                        <h2 class="section-title">笔记列表</h2>
+                    </div>
+                    <div class="notes-list" id="notesList">
+                        <!-- 笔记列表将通过JavaScript动态添加 -->
+                    </div>
                 </div>
             </div>
 
             <!-- 右侧工具栏 -->
             <div class="tools-section">
+                <!-- 链接管理工具 -->
+                <div id="linkTools" class="tool-container">
                 <!-- 添加分类 -->
                 <div class="section">
                     <h2 class="section-title">添加新分类</h2>
@@ -1251,12 +1565,12 @@
                     <div class="link-form">
                         <div class="form-group">
                             <label>选择分类</label>
-                            <div class="custom-select" onclick="toggleDropdown(event)">
-                                <div class="selected-option">请选择分类...</div>
-                                <div class="dropdown-menu">
-                                    <!-- 分类选项将通过JavaScript动态添加 -->
+                                <div class="custom-select" onclick="toggleDropdown(event)">
+                                    <div class="selected-option">请选择分类...</div>
+                                    <div class="dropdown-menu">
+                                        <!-- 分类选项将通过JavaScript动态添加 -->
+                                    </div>
                                 </div>
-                            </div>
                         </div>
                         <div class="form-group">
                             <label for="titleInput">网站名称</label>
@@ -1278,10 +1592,43 @@
                 <div class="section">
                     <h2 class="section-title">工具箱</h2>
                     <div class="action-buttons">
-                        <button class="action-button" onclick="exportTemplate()">导入示例</button>
+                            <button class="action-button" onclick="exportTemplate()">导入示例</button>
                         <button class="action-button" onclick="importLinks()">导入链接</button>
                         <button class="action-button" onclick="exportLinks()">导出链接</button>
                         <button class="action-button" onclick="checkLinks()">检查链接</button>
+                    </div>
+                </div>
+            </div>
+
+                <!-- 笔记管理工具 -->
+                <div id="noteTools" class="tool-container" style="display: none;">
+                    <!-- 添加笔记 -->
+                    <div class="section">
+                        <h2 class="section-title">添加新笔记</h2>
+                        <div class="note-form">
+                            <div class="form-group">
+                                <label for="noteTitle">笔记标题</label>
+                                <input type="text" id="noteTitle" placeholder="请输入标题...">
+                            </div>
+                            <div class="form-group">
+                                <label for="noteContent">笔记内容</label>
+                                <textarea id="noteContent" placeholder="请输入内容..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="noteTags">标签</label>
+                                <input type="text" id="noteTags" placeholder="用逗号分隔多个标签...">
+                            </div>
+                            <button class="add-note-button" onclick="noteManager.addNote()">添加笔记</button>
+                        </div>
+                    </div>
+
+                    <!-- 笔记工具箱 -->
+                    <div class="section">
+                        <h2 class="section-title">笔记工具</h2>
+                        <div class="action-buttons">
+                            <button class="action-button" onclick="noteManager.exportNotes()">导出笔记</button>
+                            <button class="action-button" onclick="noteManager.importNotes()">导入笔记</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1322,14 +1669,14 @@
         // 删除链接
         async function deleteLink(linkId) {
             showConfirmDialog('确定要删除这个链接吗？', async () => {
-                try {
+            try {
                     const response = await fetch(`${baseUrl}/api/links/${encodeURIComponent(linkId)}`, {
-                        method: 'DELETE'
-                    });
+                    method: 'DELETE'
+                });
 
-                    if (!response.ok) {
-                        throw new Error('删除链接失败');
-                    }
+                if (!response.ok) {
+                    throw new Error('删除链接失败');
+                }
 
                     // 重新加载分类和导航栏
                     await loadCategories();
@@ -1341,11 +1688,11 @@
                         allCategoriesHeader.click();
                     }
                     
-                    showToast('链接删除成功！');
-                } catch (error) {
-                    console.error('删除链接失败:', error);
-                    showToast('删除链接失败: ' + error.message, 'error');
-                }
+                showToast('链接删除成功！');
+            } catch (error) {
+                console.error('删除链接失败:', error);
+                showToast('删除链接失败: ' + error.message, 'error');
+            }
             });
         }
 
@@ -1658,6 +2005,16 @@
             try {
                 await loadCategories();
                 await updateSidebarNav();
+                // 确保默认显示链接管理界面
+                showLinks();
+                // 默认选中"全部分类"
+                const allCategoriesHeader = Array.from(document.querySelectorAll('#categoryNav .category-nav-header'))
+                    .find(header => header.textContent.includes('全部分类'));
+                if (allCategoriesHeader) {
+                    allCategoriesHeader.classList.add('active');
+                    // 触发点击事件以确保状态一致
+                    await filterLinksByCategory('all');
+                }
                 console.log('初始化完成');
             } catch (error) {
                 console.error('初始化失败:', error);
@@ -1679,7 +2036,7 @@
                 // 更新分类筛选器的下拉框
                 const filterDropdownMenu = document.querySelector('.category-filter .dropdown-menu');
                 filterDropdownMenu.innerHTML = `<div class="dropdown-item selected" data-value="all">显示所有分类</div>`;
-                categories.forEach(category => {
+                    categories.forEach(category => {
                     filterDropdownMenu.innerHTML += `
                         <div class="dropdown-item" data-value="${category}">${category}</div>
                     `;
@@ -1688,7 +2045,7 @@
                 // 更新添加链接表单的下拉框
                 const addLinkDropdownMenu = document.querySelector('.link-form .dropdown-menu');
                 addLinkDropdownMenu.innerHTML = '';
-                categories.forEach(category => {
+                    categories.forEach(category => {
                     addLinkDropdownMenu.innerHTML += `
                         <div class="dropdown-item" data-value="${category}">${category}</div>
                     `;
@@ -1736,53 +2093,38 @@
                 console.log('筛选分类:', category);
                 const nav = document.getElementById('categoryNav');
                 if (nav) {
-                    nav.querySelectorAll('.category-nav-header').forEach(header => 
-                        header.classList.remove('active')
-                    );
-                    
-                    if (category === 'all') {
-                        const allCategoriesHeader = nav.querySelector('li:first-child .category-nav-header');
-                        if (allCategoriesHeader) {
-                            allCategoriesHeader.classList.add('active');
-                        }
+                    // 移除其他项的active类，但保持"全部分类"的状态
+                    nav.querySelectorAll('.category-nav-header').forEach(header => {
+                        const isAllCategories = header.textContent.includes('全部分类');
+                        if (category === 'all' && isAllCategories) {
+                            header.classList.add('active');
+                        } else if (category !== 'all' && !isAllCategories) {
+                            const categoryName = header.querySelector('.category-name')?.textContent;
+                            if (categoryName === category) {
+                                header.classList.add('active');
                     } else {
-                        const categoryHeader = Array.from(nav.querySelectorAll('.category-name'))
-                            .find(span => span.textContent === category)
-                            ?.closest('.category-nav-header');
-                        if (categoryHeader) {
-                            categoryHeader.classList.add('active');
+                                header.classList.remove('active');
+                            }
                         }
-                    }
+                    });
                 }
                 
                 const linksContainer = document.querySelector('.links-container');
                 linksContainer.innerHTML = '';
                 
-                const response = await fetch(`${baseUrl}/api/links/${encodeURIComponent(category)}`);
-                if (!response.ok) {
-                    throw new Error('加载链接失败');
-                }
-                const links = await response.json();
-                
                 if (category === 'all') {
-                    const linksByCategory = {};
-                    links.forEach(link => {
-                        if (!linksByCategory[link.category]) {
-                            linksByCategory[link.category] = [];
-                        }
-                        linksByCategory[link.category].push(link);
-                    });
-                    
+                    // 获取所有分类
                     const categoriesResponse = await fetch(`${baseUrl}/api/categories?sort=${isCategoryDescSort ? 'desc' : 'asc'}`);
-                    const sortedCategories = await categoriesResponse.json();
+                    const categories = await categoriesResponse.json();
                     
-                    const categoriesContainer = document.createElement('div');
-                    categoriesContainer.className = 'categories-container';
-                    linksContainer.appendChild(categoriesContainer);
-                    
-                    sortedCategories.forEach(cat => {
-                        const categoryLinks = linksByCategory[cat] || [];
-                        if (categoryLinks.length > 0) {
+                    // 为每个分类获取链接
+                    for (const cat of categories) {
+                        const response = await fetch(`${baseUrl}/api/links/${encodeURIComponent(cat)}`);
+                        if (!response.ok) continue;
+                        
+                        const links = await response.json();
+                        if (links.length === 0) continue;
+                        
                             const categorySection = document.createElement('div');
                             categorySection.className = 'category-section';
                             categorySection.setAttribute('data-category', cat);
@@ -1798,64 +2140,20 @@
                             
                             const linksList = document.createElement('div');
                             linksList.className = 'links-list';
-                            categoryLinks.forEach(link => {
+                        links.forEach(link => {
                                 linksList.appendChild(createLinkItem(link));
                             });
                             
                             categorySection.appendChild(linksList);
-                            categoriesContainer.appendChild(categorySection);
-                        }
-                    });
-
-                    // 初始化拖拽排序
-                    new Sortable(categoriesContainer, {
-                        animation: 150,
-                        handle: '.category-title',
-                        ghostClass: 'category-ghost',
-                        onEnd: async function(evt) {
-                            const categories = Array.from(categoriesContainer.children).map(
-                                el => el.getAttribute('data-category')
-                            );
-                            try {
-                                const response = await fetch(`${baseUrl}/api/categories/reorder`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({ categories })
-                                });
-                                if (response.ok) {
-                                    // 保存当前展开的分类
-                                    const expandedCategory = currentExpandedCategory;
-                                    
-                                    // 重新加载分类
-                                    await loadCategories();
-                                    await updateSidebarNav();
-                                    
-                                    // 如果之前有展开的分类，重新展开它
-                                    if (expandedCategory) {
-                                        const categoryElement = document.querySelector(`.category-name[data-category="${expandedCategory}"]`)?.closest('.category-nav-item');
-                                        if (categoryElement) {
-                                            const toggle = categoryElement.querySelector('.category-nav-toggle');
-                                            const links = categoryElement.querySelector('.category-nav-links');
-                                            if (toggle && links) {
-                                                toggle.classList.add('expanded');
-                                                links.classList.add('expanded');
-                                                currentExpandedCategory = expandedCategory;
-                                            }
-                                        }
-                                    }
-                                    
-                                    showToast('分类顺序已更新');
-                                }
-                            } catch (error) {
-                                console.error('更新分类顺序失败:', error);
-                                showToast('更新分类顺序失败', 'error');
-                            }
-                        }
-                    });
-                    
+                        linksContainer.appendChild(categorySection);
+                    }
                 } else {
+                    const response = await fetch(`${baseUrl}/api/links/${encodeURIComponent(category)}`);
+                    if (!response.ok) {
+                        throw new Error('加载链接失败');
+                    }
+                    const links = await response.json();
+                    
                     const categorySection = document.createElement('div');
                     categorySection.className = 'category-section';
                     categorySection.innerHTML = `
@@ -1935,21 +2233,21 @@
                     // 显示导入中的提示
                     showToast('正在导入链接，请稍候...', 'info');
 
-                    const reader = new FileReader();
-                    reader.onload = async (event) => {
-                        try {
-                            const links = JSON.parse(event.target.result);
-                            const response = await fetch(`${baseUrl}/api/import`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ links })
-                            });
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    try {
+                        const links = JSON.parse(event.target.result);
+                        const response = await fetch(`${baseUrl}/api/import`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ links })
+                        });
                             
-                            if (response.ok) {
+                        if (response.ok) {
                                 // 等待所有重新加载操作完成
                                 try {
                                     // 重新加载分类
-                                    await loadCategories();
+                            await loadCategories();
                                     // 更新侧边栏导航
                                     await updateSidebarNav();
                                     // 重新加载所有链接
@@ -1986,15 +2284,15 @@
                                     console.error('重新加载数据失败:', reloadError);
                                     showToast('导入成功，但重新加载数据失败，请刷新页面', 'error');
                                 }
-                            } else {
-                                throw new Error('服务器响应错误');
-                            }
-                        } catch (error) {
-                            console.error('导入链接失败:', error);
-                            showToast('导入链接失败，请确保文件格式正确', 'error');
+                        } else {
+                            throw new Error('服务器响应错误');
                         }
-                    };
-                    reader.readAsText(file);
+                    } catch (error) {
+                        console.error('导入链接失败:', error);
+                            showToast('导入链接失败，请确保文件格式正确', 'error');
+                    }
+                };
+                reader.readAsText(file);
                 } catch (error) {
                     console.error('导入链接失败:', error);
                     showToast('导入链接失败: ' + error.message, 'error');
@@ -2259,23 +2557,23 @@
         // 删除分类
         async function deleteCategory(category) {
             showConfirmDialog(`确定要删除分类"${category}"及其所有链接吗？`, async () => {
-                try {
-                    const response = await fetch(`${baseUrl}/api/categories/${encodeURIComponent(category)}`, {
-                        method: 'DELETE'
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error('删除分类失败');
-                    }
-
-                    await loadCategories();
-                    await updateSidebarNav();
-                    await loadLinks('all');
-                    showToast('分类删除成功！');
-                } catch (error) {
-                    console.error('删除分类失败:', error);
-                    showToast('删除分类失败: ' + error.message, 'error');
+            try {
+                const response = await fetch(`${baseUrl}/api/categories/${encodeURIComponent(category)}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('删除分类失败');
                 }
+
+                await loadCategories();
+                await updateSidebarNav();
+                await loadLinks('all');
+                showToast('分类删除成功！');
+            } catch (error) {
+                console.error('删除分类失败:', error);
+                showToast('删除分类失败: ' + error.message, 'error');
+            }
             });
         }
 
@@ -2387,17 +2685,92 @@
             const categoryElements = new Map();
 
             try {
+                // 添加笔记导航
+                const notesLi = document.createElement('li');
+                notesLi.className = 'category-nav-item';
+                notesLi.innerHTML = `
+                    <div class="category-nav-header">
+                        <span class="category-nav-toggle">▶</span>
+                        <span class="category-name">我的笔记</span>
+                    </div>
+                    <div class="category-nav-links"></div>
+                `;
+
+                const notesHeader = notesLi.querySelector('.category-nav-header');
+                const notesToggle = notesLi.querySelector('.category-nav-toggle');
+                const notesLinks = notesLi.querySelector('.category-nav-links');
+                let notesLoaded = false;
+
+                notesHeader.addEventListener('click', async () => {
+                    // 移除所有分类的active类
+                    nav.querySelectorAll('.category-nav-header').forEach(h => {
+                        h.classList.remove('active');
+                    });
+                    // 添加active类到"我的笔记"
+                    notesHeader.classList.add('active');
+
+                    if (currentExpandedCategory === 'notes') {
+                        notesToggle.classList.remove('expanded');
+                        notesLinks.classList.remove('expanded');
+                        currentExpandedCategory = null;
+                        return;
+                    }
+
+                    if (currentExpandedCategory) {
+                        const prevElement = categoryElements.get(currentExpandedCategory);
+                        if (prevElement) {
+                            prevElement.toggle.classList.remove('expanded');
+                            prevElement.links.classList.remove('expanded');
+                        }
+                    }
+
+                    notesToggle.classList.add('expanded');
+                    notesLinks.classList.add('expanded');
+                    currentExpandedCategory = 'notes';
+
+                    if (!notesLoaded) {
+                        try {
+                            const response = await fetch(`${baseUrl}/api/notes`);
+                            if (!response.ok) throw new Error('获取笔记失败');
+                            
+                            const notes = await response.json();
+                            notesLinks.innerHTML = notes.map(note => `
+                                <a href="#" class="category-nav-link" onclick="showNoteDetail(${note.id}); return false;" title="${note.content}">
+                                    ${note.title}
+                                </a>
+                            `).join('');
+                            
+                            notesLoaded = true;
+                        } catch (error) {
+                            console.error('加载笔记列表失败:', error);
+                            showToast('加载笔记列表失败', 'error');
+                        }
+                    }
+                });
+
+                nav.appendChild(notesLi);
+
+                const divider = document.createElement('div');
+                divider.className = 'category-nav-divider';
+                nav.appendChild(divider);
+
+                // 添加"全部分类"选项
                 const allCategoriesLi = document.createElement('li');
                 allCategoriesLi.className = 'category-nav-item';
                 allCategoriesLi.innerHTML = `
-                    <div class="category-nav-header">
-                        <span>显示所有分类</span>
+                    <div class="category-nav-header active">
+                        <span>全部分类</span>
                     </div>
                 `;
 
-                allCategoriesLi.querySelector('.category-nav-header').addEventListener('click', async () => {
-                    nav.querySelectorAll('.category-nav-header').forEach(header => header.classList.remove('active'));
-                    allCategoriesLi.querySelector('.category-nav-header').classList.add('active');
+                const allCategoriesHeader = allCategoriesLi.querySelector('.category-nav-header');
+
+                allCategoriesHeader.addEventListener('click', async () => {
+                    // 移除所有分类的active类，包括"全部分类"
+                    nav.querySelectorAll('.category-nav-header').forEach(h => {
+                        h.classList.remove('active');
+                    });
+                    allCategoriesHeader.classList.add('active');
 
                     // 更新分类筛选器的选中状态
                     const filterSelect = document.querySelector('.category-filter .selected-option');
@@ -2430,10 +2803,6 @@
 
                 nav.appendChild(allCategoriesLi);
 
-                const divider = document.createElement('div');
-                divider.className = 'category-nav-divider';
-                nav.appendChild(divider);
-
                 const response = await fetch(`${baseUrl}/api/categories?sort=${isCategoryDescSort ? 'desc' : 'asc'}`);
                 if (!response.ok) throw new Error('获取分类失败');
                 const categories = await response.json();
@@ -2457,7 +2826,10 @@
                     categoryElements.set(category, { header, toggle, links, li });
 
                     header.addEventListener('click', async () => {
-                        nav.querySelectorAll('.category-nav-header').forEach(h => h.classList.remove('active'));
+                        // 移除所有分类的active类，包括"全部分类"
+                        nav.querySelectorAll('.category-nav-header').forEach(h => {
+                            h.classList.remove('active');
+                        });
                         header.classList.add('active');
 
                         // 更新分类筛选器的选中状态
@@ -2629,6 +3001,447 @@
             URL.revokeObjectURL(url);
             button.closest('.confirm-dialog-overlay').remove();
             showToast('示例文件下载成功！');
+        }
+
+        // 笔记管理
+        const noteManager = {
+            isSubmitting: false,
+
+            async addNote() {
+                if (this.isSubmitting) {
+                    utils.showToast('请等待当前操作完成', 'info');
+                    return;
+                }
+
+                const title = document.getElementById('noteTitle').value;
+                const content = document.getElementById('noteContent').value;
+                const tags = document.getElementById('noteTags').value;
+
+                if (!title || !content) {
+                    utils.showToast('标题和内容为必填项', 'error');
+                    return;
+                }
+
+                this.isSubmitting = true;
+                utils.showToast('正在添加笔记...', 'info');
+
+                try {
+                    const response = await fetch(`${baseUrl}/api/notes`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ title, content, tags })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('添加笔记失败');
+                    }
+
+                    utils.showToast('笔记添加成功', 'success');
+                    this.clearNoteForm();
+                    await this.loadNotes();
+                } catch (error) {
+                    console.error('添加笔记失败:', error);
+                    utils.showToast('添加笔记失败', 'error');
+                } finally {
+                    this.isSubmitting = false;
+                }
+            },
+
+            async loadNotes() {
+                try {
+                    const response = await fetch(`${baseUrl}/api/notes`);
+                    if (!response.ok) {
+                        throw new Error('获取笔记失败');
+                    }
+
+                    const notes = await response.json();
+                    this.renderNotes(notes);
+                } catch (error) {
+                    console.error('加载笔记失败:', error);
+                    utils.showToast('加载笔记失败', 'error');
+                }
+            },
+
+            async deleteNote(id) {
+                if (!confirm('确定要删除这个笔记吗？')) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${baseUrl}/api/notes/${id}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('删除笔记失败');
+                    }
+
+                    utils.showToast('笔记删除成功', 'success');
+                    await this.loadNotes();
+                } catch (error) {
+                    console.error('删除笔记失败:', error);
+                    utils.showToast('删除笔记失败', 'error');
+                }
+            },
+
+            async editNote(id) {
+                try {
+                    const response = await fetch(`${baseUrl}/api/notes/${id}`);
+                    if (!response.ok) {
+                        throw new Error('获取笔记失败');
+                    }
+
+                    const note = await response.json();
+                    document.getElementById('noteTitle').value = note.title;
+                    document.getElementById('noteContent').value = note.content;
+                    document.getElementById('noteTags').value = note.tags || '';
+
+                    // 将表单滚动到可见位置
+                    document.querySelector('.note-form').scrollIntoView({ behavior: 'smooth' });
+                } catch (error) {
+                    console.error('加载笔记失败:', error);
+                    utils.showToast('加载笔记失败', 'error');
+                }
+            },
+
+            renderNotes(notes) {
+                const notesList = document.getElementById('notesList');
+                notesList.innerHTML = notes.map(note => `
+                    <div class="note-card" data-note-id="${note.id}">
+                        <h3>${note.title}</h3>
+                        <div class="note-content">${note.content}</div>
+                        ${note.tags ? `<div class="note-tags">标签: ${note.tags}</div>` : ''}
+                        <div class="note-actions">
+                            <button class="edit-note" onclick="editNoteDialog(${note.id}, '${note.title}', '${note.content}', '${note.tags || ''}')">编辑</button>
+                            <button class="delete-note" onclick="noteManager.deleteNote(${note.id})">删除</button>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            clearNoteForm() {
+                document.getElementById('noteTitle').value = '';
+                document.getElementById('noteContent').value = '';
+                document.getElementById('noteTags').value = '';
+            }
+        };
+
+        function showNotes() {
+            // 隐藏链接相关内容
+            document.getElementById('linksContainer').style.display = 'none';
+            document.getElementById('linkTools').style.display = 'none';
+            
+            // 显示笔记相关内容
+            document.getElementById('notesContainer').style.display = 'block';
+            document.getElementById('noteTools').style.display = 'block';
+            
+            // 更新导航栏状态
+            document.querySelector('.nav-links a.active').classList.remove('active');
+            document.querySelector('.nav-links a:nth-child(2)').classList.add('active');
+
+            // 保持导航栏可见，但只显示笔记相关内容
+            const categoryNav = document.getElementById('categoryNav');
+            categoryNav.style.display = 'block';
+            
+            // 显示笔记导航项，隐藏其他导航项
+            categoryNav.querySelectorAll('.category-nav-item').forEach(item => {
+                const categoryName = item.querySelector('.category-name');
+                if (categoryName && categoryName.textContent.includes('我的笔记')) {
+                    item.style.display = 'block';  // 显示笔记导航项
+                    // 移除其他项的active类
+                    categoryNav.querySelectorAll('.category-nav-header').forEach(h => {
+                        h.classList.remove('active');
+                    });
+                    // 添加active类到"我的笔记"
+                    const notesHeader = item.querySelector('.category-nav-header');
+                    if (notesHeader) {
+                        notesHeader.classList.add('active');
+                        // 自动展开"我的笔记"
+                        const toggle = item.querySelector('.category-nav-toggle');
+                        const links = item.querySelector('.category-nav-links');
+                        if (toggle && links) {
+                            // 先移除所有展开状态
+                            toggle.classList.remove('expanded');
+                            links.classList.remove('expanded');
+                            links.style.display = 'none';
+                            
+                            // 延迟一帧后添加展开状态
+                            requestAnimationFrame(() => {
+                                toggle.classList.add('expanded');
+                                links.classList.add('expanded');
+                                links.style.display = 'block';
+                                currentExpandedCategory = 'notes';
+                                
+                                // 加载笔记列表
+                                fetch(`${baseUrl}/api/notes`)
+                                    .then(response => response.json())
+                                    .then(notes => {
+                                        links.innerHTML = notes.map(note => `
+                                            <a href="#" class="category-nav-link" onclick="showNoteDetail(${note.id}); return false;" title="${note.content}">
+                                                ${note.title}
+                                            </a>
+                                        `).join('');
+                                    })
+                                    .catch(error => {
+                                        console.error('加载笔记列表失败:', error);
+                                        showToast('加载笔记列表失败', 'error');
+                                    });
+                            });
+                        }
+                    }
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            
+            // 加载所有笔记
+            noteManager.loadNotes();
+        }
+
+        function showLinks() {
+            // 显示链接相关内容
+            document.getElementById('linksContainer').style.display = 'block';
+            document.getElementById('linkTools').style.display = 'block';
+            
+            // 隐藏笔记相关内容
+            document.getElementById('notesContainer').style.display = 'none';
+            document.getElementById('noteTools').style.display = 'none';
+            
+            // 更新导航栏状态
+            document.querySelector('.nav-links a.active').classList.remove('active');
+            document.querySelector('.nav-links a:first-child').classList.add('active');
+
+            // 显示所有导航项，但隐藏笔记相关项
+            const categoryNav = document.getElementById('categoryNav');
+            categoryNav.style.display = 'block';
+            categoryNav.querySelectorAll('.category-nav-item').forEach(item => {
+                const categoryName = item.querySelector('.category-name');
+                if (categoryName && categoryName.textContent.includes('我的笔记')) {
+                    item.style.display = 'none';
+                } else {
+                    item.style.display = 'block';
+                }
+            });
+            
+            // 隐藏第一个分隔线（笔记下方的分隔线）
+            const firstDivider = categoryNav.querySelector('.category-nav-divider');
+            if (firstDivider) {
+                firstDivider.style.display = 'none';
+            }
+
+            // 确保"全部分类"保持选中状态
+            const allCategoriesHeader = Array.from(categoryNav.querySelectorAll('.category-nav-header'))
+                .find(header => header.textContent.includes('全部分类'));
+            if (allCategoriesHeader) {
+                // 移除其他项的active类
+                categoryNav.querySelectorAll('.category-nav-header').forEach(header => {
+                    if (header !== allCategoriesHeader && !header.querySelector('.category-name')?.textContent.includes('我的笔记')) {
+                        header.classList.remove('active');
+                    }
+                });
+                allCategoriesHeader.classList.add('active');
+            }
+            
+            // 加载链接列表
+            loadLinks('all');
+        }
+
+        // 修改笔记搜索功能
+        function searchNotes() {
+            const searchText = document.getElementById('noteSearchInput').value.toLowerCase();
+            const searchType = document.querySelector('input[name="search-type"]:checked').value;
+            
+            // 根据搜索类型更新placeholder
+            const searchInput = document.getElementById('noteSearchInput');
+            searchInput.placeholder = searchType === 'content' ? '搜索笔记内容...' : '搜索标签，多个标签用逗号分隔...';
+            
+            noteManager.searchNotes(searchText, searchType);
+        }
+
+        // 扩展笔记管理器功能
+        Object.assign(noteManager, {
+            async searchNotes(searchText, searchType = 'content') {
+                try {
+                    const response = await fetch(`${baseUrl}/api/notes/search?q=${encodeURIComponent(searchText)}&type=${searchType}`);
+                    if (!response.ok) {
+                        throw new Error('搜索笔记失败');
+                    }
+                    const notes = await response.json();
+                    
+                    // 如果是标签搜索，对结果进行标签高亮处理
+                    if (searchType === 'tag' && searchText) {
+                        const searchTags = searchText.split(',').map(tag => tag.trim().toLowerCase());
+                        notes.forEach(note => {
+                            if (note.tags) {
+                                const noteTags = note.tags.split(',').map(tag => tag.trim());
+                                note.tags = noteTags.map(tag => {
+                                    if (searchTags.includes(tag.toLowerCase())) {
+                                        return `<span class="highlighted-tag">${tag}</span>`;
+                                    }
+                                    return tag;
+                                }).join(', ');
+                            }
+                        });
+                    }
+                    
+                    this.renderNotes(notes);
+                    
+                    // 显示搜索结果统计
+                    const resultCount = notes.length;
+                    utils.showToast(`找到 ${resultCount} 个${searchType === 'tag' ? '标签匹配的' : ''}笔记`);
+                } catch (error) {
+                    console.error('搜索笔记失败:', error);
+                    utils.showToast('搜索笔记失败', 'error');
+                }
+            },
+
+            async exportNotes() {
+                try {
+                    const response = await fetch(`${baseUrl}/api/notes/export`);
+                    if (!response.ok) {
+                        throw new Error('导出笔记失败');
+                    }
+                    const notes = await response.json();
+                    const blob = new Blob([JSON.stringify(notes, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'notes.json';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    utils.showToast('笔记导出成功');
+                } catch (error) {
+                    console.error('导出笔记失败:', error);
+                    utils.showToast('导出笔记失败', 'error');
+                }
+            },
+
+            async importNotes() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    try {
+                        const reader = new FileReader();
+                        reader.onload = async (event) => {
+                            const notes = JSON.parse(event.target.result);
+                            const response = await fetch(`${baseUrl}/api/notes/import`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ notes })
+                            });
+
+                            if (!response.ok) {
+                                throw new Error('导入笔记失败');
+                            }
+
+                            await this.loadNotes();
+                            utils.showToast('笔记导入成功');
+                        };
+                        reader.readAsText(file);
+                    } catch (error) {
+                        console.error('导入笔记失败:', error);
+                        utils.showToast('导入笔记失败', 'error');
+                    }
+                };
+                input.click();
+            }
+        });
+
+        // 添加笔记编辑对话框函数
+        function editNoteDialog(id, title, content, tags) {
+            const overlay = document.createElement('div');
+            overlay.className = 'edit-dialog-overlay';
+            
+            overlay.innerHTML = `
+                <div class="edit-dialog">
+                    <div class="edit-dialog-title">编辑笔记</div>
+                    <div class="edit-form-group">
+                        <label for="editNoteTitle">笔记标题</label>
+                        <input type="text" id="editNoteTitle" value="${title}">
+                    </div>
+                    <div class="edit-form-group">
+                        <label for="editNoteContent">笔记内容</label>
+                        <textarea id="editNoteContent" style="min-height: 150px;">${content}</textarea>
+                    </div>
+                    <div class="edit-form-group">
+                        <label for="editNoteTags">标签</label>
+                        <input type="text" id="editNoteTags" value="${tags}" placeholder="用逗号分隔多个标签">
+                    </div>
+                    <div class="edit-dialog-buttons">
+                        <button class="edit-dialog-button edit-dialog-cancel" onclick="this.closest('.edit-dialog-overlay').remove()">取消</button>
+                        <button class="edit-dialog-button edit-dialog-confirm" onclick="updateNote(${id})">保存</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+        }
+
+        // 添加更新笔记函数
+        async function updateNote(id) {
+            const title = document.getElementById('editNoteTitle').value.trim();
+            const content = document.getElementById('editNoteContent').value.trim();
+            const tags = document.getElementById('editNoteTags').value.trim();
+
+            if (!title || !content) {
+                showToast('标题和内容不能为空', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${baseUrl}/api/notes/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ title, content, tags })
+                });
+                
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || '更新失败');
+                }
+
+                // 关闭编辑对话框
+                document.querySelector('.edit-dialog-overlay').remove();
+
+                // 重新加载笔记列表
+                await noteManager.loadNotes();
+                showToast('笔记更新成功！');
+            } catch (error) {
+                console.error('更新笔记失败:', error);
+                showToast('更新笔记失败: ' + error.message, 'error');
+            }
+        }
+
+        // 添加笔记详情显示函数
+        async function showNoteDetail(noteId) {
+            try {
+                const response = await fetch(`${baseUrl}/api/notes/${noteId}`);
+                if (!response.ok) throw new Error('获取笔记详情失败');
+                
+                const note = await response.json();
+                
+                // 切换到笔记视图
+                showNotes();
+                
+                // 滚动到对应的笔记卡片
+                const noteCard = document.querySelector(`[data-note-id="${noteId}"]`);
+                if (noteCard) {
+                    noteCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // 添加高亮效果
+                    noteCard.style.animation = 'highlight 2s';
+                }
+            } catch (error) {
+                console.error('获取笔记详情失败:', error);
+                showToast('获取笔记详情失败', 'error');
+            }
         }
     </script>
 </body>

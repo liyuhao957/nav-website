@@ -5,6 +5,7 @@ const cheerio = require('cheerio');
 const cron = require('node-cron');
 const mysql = require('mysql2/promise'); // 使用promise版本
 const Link = require('./models/Link');
+const Note = require('./models/Note');
 
 // 数据库连接配置
 const dbConfig = {
@@ -64,7 +65,7 @@ async function executeQuery(sql, params = []) {
         console.log('正在获取数据库连接...');
         connection = await pool.getConnection();
         console.log(`执行查询 | 连接ID: ${connection.threadId} | SQL: ${sql}`);
-        const [results] = await connection.query(sql, params);
+        const [results] = await connection.execute(sql, params);
         return results;
     } catch (error) {
         console.error('数据库查询错误:', error);
@@ -821,12 +822,169 @@ async function initializeCategoriesTable() {
     }
 }
 
+// 添加初始化notes表的函数
+async function initializeNotesTable() {
+    try {
+        // 创建notes表
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS notes (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                title VARCHAR(255) NOT NULL,
+                content TEXT NOT NULL,
+                tags VARCHAR(255),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            )
+        `);
+        console.log('Notes表初始化完成');
+    } catch (error) {
+        console.error('初始化notes表失败:', error);
+        throw error;
+    }
+}
+
 // 在应用启动时初始化表
 testConnection().then(() => {
-    initializeCategoriesTable().then(() => {
+    Promise.all([
+        initializeCategoriesTable(),
+        initializeNotesTable()
+    ]).then(() => {
         const port = process.env.PORT || 3000;
         app.listen(port, () => {
             console.log(`服务器运行在端口 ${port}`);
         });
     });
+});
+
+// 获取所有笔记
+app.get('/api/notes', async (req, res) => {
+    try {
+        const rows = await executeQuery('SELECT * FROM notes ORDER BY created_at DESC');
+        res.json(rows);
+    } catch (error) {
+        console.error('获取笔记失败:', error);
+        res.status(500).json({ error: '获取笔记失败' });
+    }
+});
+
+// 搜索笔记
+app.get('/api/notes/search', async (req, res) => {
+    try {
+        const { q, type } = req.query;
+        let query;
+        let params;
+
+        if (type === 'tag') {
+            // 按标签搜索
+            const tags = q.split(',').map(tag => tag.trim());
+            const tagConditions = tags.map(() => 'tags LIKE ?').join(' OR ');
+            params = tags.map(tag => `%${tag}%`);
+            query = `SELECT * FROM notes WHERE ${tagConditions}`;
+        } else {
+            // 按内容搜索（默认）
+            query = 'SELECT * FROM notes WHERE title LIKE ? OR content LIKE ?';
+            params = [`%${q}%`, `%${q}%`];
+        }
+
+        const rows = await executeQuery(query, params);
+        res.json(rows);
+    } catch (error) {
+        console.error('搜索笔记失败:', error);
+        res.status(500).json({ error: '搜索失败' });
+    }
+});
+
+// 获取单个笔记
+app.get('/api/notes/:id', async (req, res) => {
+    try {
+        const [note] = await executeQuery(
+            'SELECT * FROM notes WHERE id = ?',
+            [req.params.id]
+        );
+        
+        if (!note) {
+            return res.status(404).json({ error: '笔记不存在' });
+        }
+        
+        res.json(note);
+    } catch (error) {
+        console.error('获取笔记失败:', error);
+        res.status(500).json({ error: '获取笔记失败' });
+    }
+});
+
+// 创建笔记
+app.post('/api/notes', async (req, res) => {
+    try {
+        const { title, content, tags } = req.body;
+        
+        if (!title || !content) {
+            return res.status(400).json({ error: '标题和内容为必填项' });
+        }
+        
+        const result = await executeQuery(
+            'INSERT INTO notes (title, content, tags) VALUES (?, ?, ?)',
+            [title, content, tags || null]
+        );
+        
+        if (!result.insertId) {
+            throw new Error('创建笔记失败');
+        }
+        
+        const [newNote] = await executeQuery(
+            'SELECT * FROM notes WHERE id = ?',
+            [result.insertId]
+        );
+        
+        if (!newNote) {
+            throw new Error('获取新创建的笔记失败');
+        }
+        
+        res.json({ message: '笔记创建成功', note: newNote });
+    } catch (error) {
+        console.error('创建笔记失败:', error);
+        res.status(500).json({ error: '创建笔记失败' });
+    }
+});
+
+// 更新笔记
+app.put('/api/notes/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { title, content, tags } = req.body;
+        
+        if (!title || !content) {
+            return res.status(400).json({ error: '标题和内容不能为空' });
+        }
+        
+        const success = await Note.update(id, { title, content, tags });
+        
+        if (success) {
+            res.json({ message: '笔记更新成功' });
+        } else {
+            res.status(404).json({ error: '笔记不存在' });
+        }
+    } catch (error) {
+        console.error('更新笔记失败:', error);
+        res.status(500).json({ error: '服务器错误' });
+    }
+});
+
+// 删除笔记
+app.delete('/api/notes/:id', async (req, res) => {
+    try {
+        const result = await executeQuery(
+            'DELETE FROM notes WHERE id = ?',
+            [req.params.id]
+        );
+        
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: '笔记不存在' });
+        }
+        
+        res.json({ message: '笔记删除成功' });
+    } catch (error) {
+        console.error('删除笔记失败:', error);
+        res.status(500).json({ error: '删除笔记失败' });
+    }
 }); 
