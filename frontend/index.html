@@ -1,12 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TC</title>
-    <!-- 添加网站图标 -->
+    <title>导航网站</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <!-- 添加 Sortable.js -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         /* 基础样式重置 */
@@ -1674,23 +1672,24 @@
     <div class="toast-container"></div>
 
     <script>
-        // 定义全局baseUrl
-        const baseUrl = 'http://localhost:3000';
+        // 定义基础URL
+        const baseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? 'http://localhost:3000'
+            : window.location.origin;
 
-        // 添加全局变量
-        let currentExpandedCategory = null;
-        let isCategoryDescSort = true; // 默认降序（最新创建的在前）
+        // 默认favicon
+        const defaultFaviconUrl = '/favicon.svg';
 
-        // 添加滚动到顶部的辅助函数
-        function scrollToTop() {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
+        // 分类排序方向
+        let isCategoryDescSort = false;
+        
+        // 处理favicon URL的辅助函数
+        function getFaviconUrl(favicon) {
+            if (!favicon) return defaultFaviconUrl;
+            if (favicon.startsWith('http')) return favicon;
+            // 如果是相对路径，添加baseUrl
+            return baseUrl + favicon;
         }
-
-        // 默认图标的base64编码
-        const defaultFavicon = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiM2YzZjNmMiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIvPjwvc3ZnPg==';
 
         // 记录访问次数
         async function recordVisit(linkId) {
@@ -1704,18 +1703,17 @@
         // 删除链接
         async function deleteLink(linkId) {
             showConfirmDialog('确定要删除这个链接吗？', async () => {
-            try {
+                try {
                     const response = await fetch(`${baseUrl}/api/links/${encodeURIComponent(linkId)}`, {
-                    method: 'DELETE'
-                });
+                        method: 'DELETE'
+                    });
 
-                if (!response.ok) {
-                    throw new Error('删除链接失败');
-                }
+                    if (!response.ok) {
+                        throw new Error('删除链接失败');
+                    }
 
-                    // 重新加载分类和导航栏
-                    await loadCategories();
-                    await updateSidebarNav();
+                    // 使用reloadCategoriesWithSort替代loadCategories
+                    await reloadCategoriesWithSort(null, 'all');
                     
                     // 切换到"显示所有分类"视图
                     const allCategoriesHeader = document.querySelector('#categoryNav li:first-child .category-nav-header');
@@ -1723,11 +1721,11 @@
                         allCategoriesHeader.click();
                     }
                     
-                showToast('链接删除成功！');
-            } catch (error) {
-                console.error('删除链接失败:', error);
-                showToast('删除链接失败: ' + error.message, 'error');
-            }
+                    showToast('链接删除成功！');
+                } catch (error) {
+                    console.error('删除链接失败:', error);
+                    showToast('删除链接失败: ' + error.message, 'error');
+                }
             });
         }
 
@@ -2195,65 +2193,8 @@
 
         // 移除loadCategories函数的重复调用
         async function loadCategories() {
-            try {
-                console.log('开始加载分类...');
-                console.log('当前排序方向:', isCategoryDescSort ? 'desc' : 'asc');
-                const response = await fetch(`${baseUrl}/api/categories?sort=${isCategoryDescSort ? 'desc' : 'asc'}`);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const categories = await response.json();
-                
-                // 更新分类筛选器的下拉框
-                const filterDropdownMenu = document.querySelector('.category-filter .dropdown-menu');
-                filterDropdownMenu.innerHTML = `<div class="dropdown-item selected" data-value="all">显示所有分类</div>`;
-                categories.forEach(category => {
-                    filterDropdownMenu.innerHTML += `
-                        <div class="dropdown-item" data-value="${category}">${category}</div>
-                    `;
-                });
-                
-                // 更新添加链接表单的下拉框
-                const addLinkDropdownMenu = document.querySelector('.link-form .dropdown-menu');
-                addLinkDropdownMenu.innerHTML = '';
-                categories.forEach(category => {
-                    addLinkDropdownMenu.innerHTML += `
-                        <div class="dropdown-item" data-value="${category}">${category}</div>
-                    `;
-                });
-                
-                // 添加点击事件
-                document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                    menu.querySelectorAll('.dropdown-item').forEach(item => {
-                        item.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            const value = e.target.dataset.value;
-                            const selectedText = e.target.textContent;
-                            const customSelect = e.target.closest('.custom-select');
-                            const selectedOption = customSelect.querySelector('.selected-option');
-                            
-                            // 更新选中状态
-                            menu.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('selected'));
-                            e.target.classList.add('selected');
-                            
-                            // 更新显示文本和值
-                            selectedOption.textContent = selectedText;
-                            selectedOption.setAttribute('data-value', value);
-                            
-                            // 如果是分类筛选器，触发分类切换
-                            if (customSelect.closest('.category-filter')) {
-                                handleCategoryFilterChange(value);
-                            }
-                            
-                            // 关闭下拉框
-                            customSelect.classList.remove('open');
-                        });
-                    });
-                });
-            } catch (error) {
-                console.error('加载分类失败:', error);
-                showToast('加载分类失败，请确保后端服务器已启动', 'error');
-            }
+            console.log('loadCategories被调用，但已被禁用以避免重复加载');
+            return;
         }
 
         // 防抖函数
@@ -2650,39 +2591,132 @@
         // 删除分类
         async function deleteCategory(category) {
             showConfirmDialog(`确定要删除分类"${category}"及其所有链接吗？`, async () => {
-            try {
-                const response = await fetch(`${baseUrl}/api/categories/${encodeURIComponent(category)}`, {
-                    method: 'DELETE'
-                });
-                
-                if (!response.ok) {
-                    throw new Error('删除分类失败');
-                }
+                try {
+                    console.log('开始删除分类:', category);
+                    const response = await fetch(`${baseUrl}/api/categories/${encodeURIComponent(category)}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('删除分类失败');
+                    }
 
-                // 使用reloadCategoriesWithSort来重新加载并更新所有UI
-                await reloadCategoriesWithSort(null, 'all');
-                
-                // 确保分类过滤器显示"显示所有分类"
-                const selectedOption = document.querySelector('.category-filter .selected-option');
-                if (selectedOption) {
-                    selectedOption.textContent = '显示所有分类';
-                    selectedOption.setAttribute('data-value', 'all');
-                }
-                
-                // 确保"全部分类"在侧边栏中被选中
-                const allCategoriesHeader = document.querySelector('#categoryNav li:first-child .category-nav-header');
-                if (allCategoriesHeader) {
-                    const headers = document.querySelectorAll('.category-nav-header');
-                    headers.forEach(h => h.classList.remove('active'));
-                    allCategoriesHeader.classList.add('active');
-                }
+                    // 先清空链接容器
+                    const linksContainer = document.querySelector('.links-container');
+                    linksContainer.innerHTML = '<div class="empty-message">暂无任何链接，请点击右侧"添加新链接"开始添加</div>';
 
-                showToast('分类删除成功！');
-            } catch (error) {
-                console.error('删除分类失败:', error);
-                showToast('删除分类失败: ' + error.message, 'error');
-            }
+                    // 重置分类过滤器
+                    const selectedOption = document.querySelector('.category-filter .selected-option');
+                    if (selectedOption) {
+                        selectedOption.textContent = '显示所有分类';
+                        selectedOption.setAttribute('data-value', 'all');
+                    }
+
+                    // 重置添加链接表单的分类选择器
+                    const addLinkSelectedOption = document.querySelector('.link-form .selected-option');
+                    if (addLinkSelectedOption) {
+                        addLinkSelectedOption.textContent = '请选择分类...';
+                        addLinkSelectedOption.removeAttribute('data-value');
+                    }
+
+                    // 确保"全部分类"在侧边栏中被选中
+                    const allCategoriesHeader = document.querySelector('#categoryNav li:first-child .category-nav-header');
+                    if (allCategoriesHeader) {
+                        const headers = document.querySelectorAll('.category-nav-header');
+                        headers.forEach(h => h.classList.remove('active'));
+                        allCategoriesHeader.classList.add('active');
+                    }
+
+                    // 获取最新的分类数据
+                    const categoriesResponse = await fetch(`${baseUrl}/api/categories?sort=${isCategoryDescSort ? 'desc' : 'asc'}`);
+                    if (!categoriesResponse.ok) {
+                        throw new Error('获取分类失败');
+                    }
+                    const categories = await categoriesResponse.json();
+                    console.log('删除后的分类列表:', categories);
+
+                    // 更新分类过滤器
+                    const filterDropdownMenu = document.querySelector('.category-filter .dropdown-menu');
+                    if (filterDropdownMenu) {
+                        filterDropdownMenu.innerHTML = `<div class="dropdown-item selected" data-value="all">显示所有分类</div>`;
+                        categories.forEach(category => {
+                            filterDropdownMenu.innerHTML += `
+                                <div class="dropdown-item" data-value="${category}">${category}</div>
+                            `;
+                        });
+                    }
+
+                    // 更新添加链接表单的分类选择器
+                    const addLinkDropdownMenu = document.querySelector('.link-form .dropdown-menu');
+                    if (addLinkDropdownMenu) {
+                        addLinkDropdownMenu.innerHTML = '';
+                        categories.forEach(category => {
+                            addLinkDropdownMenu.innerHTML += `
+                                <div class="dropdown-item" data-value="${category}">${category}</div>
+                            `;
+                        });
+                    }
+
+                    // 更新侧边栏导航
+                    await updateSidebarNav();
+
+                    // 重新加载链接列表
+                    await filterLinksByCategory('all');
+
+                    showToast('分类删除成功！');
+                } catch (error) {
+                    console.error('删除分类失败:', error);
+                    showToast('删除分类失败: ' + error.message, 'error');
+                }
             });
+        }
+
+        // 添加初始化UI的函数
+        async function initializeUI() {
+            try {
+                console.log('开始初始化UI...');
+                
+                // 获取最新的分类数据
+                const categoriesResponse = await fetch(`${baseUrl}/api/categories?sort=${isCategoryDescSort ? 'desc' : 'asc'}`);
+                if (!categoriesResponse.ok) {
+                    throw new Error('获取分类失败');
+                }
+                const categories = await categoriesResponse.json();
+                console.log('最新的分类数据:', categories);
+
+                // 更新分类过滤器
+                const filterDropdownMenu = document.querySelector('.category-filter .dropdown-menu');
+                if (filterDropdownMenu) {
+                    filterDropdownMenu.innerHTML = `<div class="dropdown-item selected" data-value="all">显示所有分类</div>`;
+                    categories.forEach(category => {
+                        filterDropdownMenu.innerHTML += `
+                            <div class="dropdown-item" data-value="${category}">${category}</div>
+                        `;
+                    });
+                }
+
+                // 更新添加链接表单的分类选择器
+                const addLinkDropdownMenu = document.querySelector('.link-form .dropdown-menu');
+                if (addLinkDropdownMenu) {
+                    addLinkDropdownMenu.innerHTML = '';
+                    categories.forEach(category => {
+                        addLinkDropdownMenu.innerHTML += `
+                            <div class="dropdown-item" data-value="${category}">${category}</div>
+                        `;
+                    });
+                }
+
+                // 更新侧边栏导航
+                await updateSidebarNav();
+
+                // 重新加载链接列表
+                await loadLinks('all');
+
+                console.log('UI初始化完成');
+            } catch (error) {
+                console.error('初始化UI失败:', error);
+                showToast('初始化UI失败: ' + error.message, 'error');
+            }
         }
 
         // 编辑链接
@@ -3660,11 +3694,17 @@
                 
                 const links = await response.json();
                 console.log(`获取到 ${links.length} 个链接`);
+                console.log('链接数据:', links);
                 
                 const linksContainer = document.querySelector('.links-container');
                 
                 if (links.length === 0 || (category !== 'all' && !categories.includes(category))) {
                     console.log('没有找到链接或分类已被删除，显示空状态');
+                    console.log('条件判断:', {
+                        linksLength: links.length,
+                        category,
+                        categoryExists: categories.includes(category)
+                    });
                     const message = category === 'all' 
                         ? '<div class="empty-message">暂无任何链接，请点击右侧"添加新链接"开始添加</div>'
                         : categories.includes(category)
@@ -3675,7 +3715,12 @@
                 }
                 
                 // 过滤掉已删除分类的链接
-                const validLinks = links.filter(link => categories.includes(link.category));
+                const validLinks = links.filter(link => {
+                    const isValid = categories.includes(link.category);
+                    console.log(`链接 "${link.title}" 的分类 "${link.category}" ${isValid ? '有效' : '无效'}`);
+                    return isValid;
+                });
+                console.log('过滤后的有效链接数量:', validLinks.length);
                 
                 // 按分类分组链接
                 const groupedLinks = {};
@@ -3687,11 +3732,13 @@
                 });
                 
                 console.log('分组后的分类数量:', Object.keys(groupedLinks).length);
+                console.log('分组结果:', groupedLinks);
 
                 // 对分类进行排序
                 const sortedCategories = Object.keys(groupedLinks).sort((a, b) => {
                     return isCategoryDescSort ? b.localeCompare(a) : a.localeCompare(b);
                 });
+                console.log('排序后的分类顺序:', sortedCategories);
                 
                 // 生成HTML
                 let html = '';
@@ -3710,7 +3757,7 @@
                                 ${categoryLinks.map(link => `
                                     <div class="link-item">
                                         <div class="link-content">
-                                            <img src="${link.favicon || defaultFavicon}" alt="favicon" class="link-favicon" onerror="this.src='${defaultFavicon}'">
+                                            <img src="${link.favicon || defaultFaviconUrl}" alt="favicon" class="link-favicon" onerror="this.src='${defaultFaviconUrl}'">
                                             <div class="link-info">
                                                 <a href="${link.url}" class="link-title" target="_blank" onclick="recordVisit('${link.id}')">${link.title}</a>
                                                 ${link.description ? `<div class="link-description">${link.description}</div>` : ''}
@@ -3769,6 +3816,175 @@
                 showToast('过滤链接失败: ' + error.message, 'error');
             }
         }
+
+        // 上传图标并更新favicon
+        async function uploadIconAndUpdateFavicon(linkId, iconFile) {
+            try {
+                // 创建FormData对象
+                const formData = new FormData();
+                formData.append('icon', iconFile);
+
+                // 上传图标
+                const uploadResponse = await fetch(`${baseUrl}/api/upload-icon`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!uploadResponse.ok) {
+                    throw new Error('上传图标失败');
+                }
+
+                const { iconUrl } = await uploadResponse.json();
+
+                // 更新链接的favicon
+                const updateResponse = await fetch(`${baseUrl}/api/links/${linkId}/favicon`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ favicon: iconUrl })
+                });
+
+                if (!updateResponse.ok) {
+                    throw new Error('更新favicon失败');
+                }
+
+                // 重新加载链接列表
+                await loadLinks('all');
+                showToast('图标更新成功！');
+            } catch (error) {
+                console.error('更新图标失败:', error);
+                showToast('更新图标失败: ' + error.message, 'error');
+            }
+        }
+
+        // 自动更新华为引擎说明的favicon
+        async function autoUpdateHuaweiFavicon() {
+            try {
+                const response = await fetch(`${baseUrl}/api/auto-update-huawei-favicon`, {
+                    method: 'POST'
+                });
+
+                if (!response.ok) {
+                    throw new Error('自动更新华为图标失败');
+                }
+
+                const result = await response.json();
+                await loadLinks('all');
+                showToast('华为引擎说明favicon更新成功！');
+            } catch (error) {
+                console.error('自动更新华为图标失败:', error);
+                showToast('自动更新华为图标失败: ' + error.message, 'error');
+            }
+        }
+
+        // 在显示链接的HTML中，修改img标签的src属性处理
+        function createLinkCard(link) {
+            // 处理favicon URL
+            let faviconUrl = defaultFaviconUrl;
+            if (link.favicon) {
+                if (link.favicon.startsWith('http')) {
+                    faviconUrl = link.favicon;
+                } else {
+                    // 如果是相对路径，添加baseUrl
+                    faviconUrl = baseUrl + link.favicon;
+                }
+            }
+            
+            return `
+                <div class="link-card" data-id="${link.id}">
+                    <div class="link-content">
+                        <img src="${faviconUrl}" alt="favicon" class="link-favicon" onerror="this.src='${defaultFaviconUrl}'">
+                        <div class="link-info">
+                            <a href="${link.url}" class="link-title" target="_blank" onclick="recordVisit('${link.id}')">${link.title}</a>
+                            ${link.description ? `<div class="link-description">${link.description}</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="link-actions">
+                        <button class="edit-button" onclick="editLink('${link.id}', '${link.title.replace(/'/g, "\\'")}', '${link.url.replace(/'/g, "\\'")}', '${(link.description || '').replace(/'/g, "\\'")}')">编辑</button>
+                        <button class="delete-button" onclick="deleteLink('${link.id}')">删除</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 处理favicon URL的辅助函数
+        function getFaviconUrl(favicon) {
+            if (!favicon) return defaultFaviconUrl;
+            if (favicon.startsWith('http')) return favicon;
+            // 如果是相对路径，添加baseUrl
+            return baseUrl + favicon;
+        }
+
+        function displayLinks(links) {
+            const linkContainer = document.getElementById('linkContainer');
+            linkContainer.innerHTML = '';
+            
+            // 按分类分组
+            const groupedLinks = {};
+            links.forEach(link => {
+                if (!groupedLinks[link.category]) {
+                    groupedLinks[link.category] = [];
+                }
+                groupedLinks[link.category].push(link);
+            });
+            
+            // 获取排序后的分类
+            const sortedCategories = Object.keys(groupedLinks).sort((a, b) => {
+                const categoryOrder = categories.indexOf(a) - categories.indexOf(b);
+                return sortDirection === 'desc' ? -categoryOrder : categoryOrder;
+            });
+            
+            console.log('排序后的分类顺序:', sortedCategories);
+            
+            // 按分类显示链接
+            sortedCategories.forEach(category => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'category-section';
+                categoryDiv.setAttribute('data-category', category);
+                
+                const categoryHeader = document.createElement('h2');
+                categoryHeader.textContent = category;
+                categoryDiv.appendChild(categoryHeader);
+                
+                const linksDiv = document.createElement('div');
+                linksDiv.className = 'links-container';
+                
+                groupedLinks[category].forEach(link => {
+                    const linkCard = document.createElement('div');
+                    linkCard.className = 'link-card';
+                    linkCard.setAttribute('data-id', link.id);
+                    
+                    // 使用getFaviconUrl处理图标URL
+                    const faviconUrl = getFaviconUrl(link.favicon);
+                    console.log('处理后的favicon URL:', faviconUrl); // 添加日志
+                    
+                    linkCard.innerHTML = `
+                        <div class="link-content">
+                            <img src="${faviconUrl}" alt="favicon" class="link-favicon" onerror="this.src='${defaultFaviconUrl}'">
+                            <div class="link-info">
+                                <a href="${link.url}" class="link-title" target="_blank" onclick="recordVisit('${link.id}')">${link.title}</a>
+                                ${link.description ? `<div class="link-description">${link.description}</div>` : ''}
+                            </div>
+                        </div>
+                        <div class="link-actions">
+                            <button class="edit-button" onclick="editLink('${link.id}', '${link.title.replace(/'/g, "\\'")}', '${link.url.replace(/'/g, "\\'")}', '${(link.description || '').replace(/'/g, "\\'")}')">编辑</button>
+                            <button class="delete-button" onclick="deleteLink('${link.id}')">删除</button>
+                        </div>
+                    `;
+                    
+                    linksDiv.appendChild(linkCard);
+                });
+                
+                categoryDiv.appendChild(linksDiv);
+                linkContainer.appendChild(categoryDiv);
+            });
+            
+            // 初始化分类拖拽排序
+            console.log('初始化分类拖拽排序');
+            initializeCategorySort();
+        }
     </script>
 </body>
+</html> 
 </html> 

@@ -6,6 +6,26 @@ const cron = require('node-cron');
 const mysql = require('mysql2/promise'); // 使用promise版本
 const Link = require('./models/Link');
 const Note = require('./models/Note');
+const path = require('path');
+const fs = require('fs');
+const multer = require('multer');
+
+// 配置multer存储
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const iconPath = path.join(__dirname, '../frontend/icons');
+        // 确保目录存在
+        if (!fs.existsSync(iconPath)) {
+            fs.mkdirSync(iconPath, { recursive: true });
+        }
+        cb(null, iconPath);
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + '-' + file.originalname);
+    }
+});
+
+const upload = multer({ storage: storage });
 
 // 数据库连接配置
 const dbConfig = {
@@ -131,14 +151,15 @@ testConnection();
 
 const app = express();
 
-// 配置CORS
-app.use(cors({
-    origin: '*',
-    methods: ['GET', 'POST', 'DELETE', 'UPDATE', 'PUT', 'PATCH'],
-    credentials: true
-}));
+// 启用CORS
+app.use(cors());
 
+// 解析JSON请求体
 app.use(express.json());
+
+// 设置静态文件服务
+app.use(express.static(path.join(__dirname, '../frontend')));
+app.use('/icons', express.static(path.join(__dirname, '../frontend/icons')));
 
 // 确保在每个请求完成后释放连接
 app.use((req, res, next) => {
@@ -986,5 +1007,144 @@ app.delete('/api/notes/:id', async (req, res) => {
     } catch (error) {
         console.error('删除笔记失败:', error);
         res.status(500).json({ error: '删除笔记失败' });
+    }
+});
+
+// 添加图标上传路由
+app.post('/api/upload-icon', upload.single('icon'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: '没有上传文件' });
+        }
+
+        const iconUrl = `/icons/${req.file.filename}`;
+        res.json({ iconUrl });
+    } catch (error) {
+        console.error('上传图标失败:', error);
+        res.status(500).json({ error: '上传图标失败' });
+    }
+});
+
+// 更新链接的favicon
+app.put('/api/links/:id/favicon', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { favicon } = req.body;
+
+        const [result] = await pool.query(
+            'UPDATE links SET favicon = ? WHERE id = ?',
+            [favicon, id]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: '链接不存在' });
+        }
+
+        res.json({ message: 'Favicon更新成功' });
+    } catch (error) {
+        console.error('更新favicon失败:', error);
+        res.status(500).json({ error: '更新favicon失败' });
+    }
+});
+
+// 自动下载并保存华为图标
+async function downloadHuaweiIcon() {
+    try {
+        // 1. 先获取华为引擎说明的URL
+        const [links] = await pool.query(
+            'SELECT url FROM links WHERE title = ?',
+            ['华为引擎说明']
+        );
+
+        if (links.length === 0) {
+            throw new Error('未找到华为引擎说明链接');
+        }
+
+        const siteUrl = links[0].url;
+        console.log('华为引擎说明URL:', siteUrl);
+        
+        // 2. 获取页面内容
+        console.log('正在获取页面内容...');
+        const { data } = await axios.get(siteUrl);
+        const $ = cheerio.load(data);
+        
+        // 3. 尝试获取favicon链接
+        let iconUrl = $('link[rel="icon"]').attr('href') ||
+                     $('link[rel="shortcut icon"]').attr('href') ||
+                     $('link[rel="apple-touch-icon"]').attr('href');
+        
+        console.log('从页面解析到的favicon链接:', iconUrl);
+        
+        // 如果没有找到favicon，使用默认路径
+        if (!iconUrl) {
+            const urlObj = new URL(siteUrl);
+            iconUrl = `${urlObj.protocol}//${urlObj.hostname}/favicon.ico`;
+            console.log('使用默认favicon路径:', iconUrl);
+        }
+        
+        // 如果是相对路径，转换为绝对路径
+        if (iconUrl && !iconUrl.startsWith('http')) {
+            const urlObj = new URL(siteUrl);
+            iconUrl = new URL(iconUrl, urlObj.origin).href;
+            console.log('转换为绝对路径后的favicon:', iconUrl);
+        }
+
+        // 4. 下载图标
+        console.log('开始下载图标...');
+        const iconResponse = await axios.get(iconUrl, { responseType: 'arraybuffer' });
+        const iconPath = path.join(__dirname, '../frontend/icons/huawei-logo.ico');
+        
+        console.log('图标将保存到:', iconPath);
+        
+        // 确保目录存在
+        const dir = path.dirname(iconPath);
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+            console.log('创建目录:', dir);
+        }
+        
+        // 保存图标
+        fs.writeFileSync(iconPath, iconResponse.data);
+        console.log('图标保存成功');
+        
+        return `/icons/huawei-logo.ico`;
+    } catch (error) {
+        console.error('下载华为图标失败:', error);
+        throw error;
+    }
+}
+
+// 自动更新华为引擎说明的favicon
+app.post('/api/auto-update-huawei-favicon', async (req, res) => {
+    try {
+        // 1. 查找华为引擎说明的链接ID
+        const [links] = await pool.query(
+            'SELECT id FROM links WHERE title = ?',
+            ['华为引擎说明']
+        );
+
+        if (links.length === 0) {
+            return res.status(404).json({ error: '未找到华为引擎说明链接' });
+        }
+
+        const linkId = links[0].id;
+
+        // 2. 下载并保存图标
+        const iconUrl = await downloadHuaweiIcon();
+
+        // 3. 更新数据库中的favicon
+        await pool.query(
+            'UPDATE links SET favicon = ? WHERE id = ?',
+            [iconUrl, linkId]
+        );
+
+        res.json({ 
+            message: '华为引擎说明favicon更新成功',
+            iconUrl: iconUrl,
+            linkId: linkId
+        });
+    } catch (error) {
+        console.error('自动更新华为图标失败:', error);
+        res.status(500).json({ error: '自动更新华为图标失败' });
     }
 }); 

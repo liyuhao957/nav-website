@@ -11,11 +11,16 @@
     {
       "src": "frontend/index.html",
       "use": "@vercel/static"
+    },
+    {
+      "src": "frontend/icons/**",
+      "use": "@vercel/static"
     }
   ],
   "rewrites": [
     { "source": "/api/health", "destination": "backend/server.js" },
     { "source": "/api/(.*)", "destination": "backend/server.js" },
+    { "source": "/icons/(.*)", "destination": "/frontend/icons/$1" },
     { "source": "/(.*)", "destination": "frontend/index.html" }
   ],
   "headers": [
