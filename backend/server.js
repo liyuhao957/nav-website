@@ -304,18 +304,54 @@ app.post('/api/links', async (req, res) => {
 
 // 删除链接
 app.delete('/api/links/:id', async (req, res) => {
+    let connection;
     try {
-        const result = await executeQuery(
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        // 获取要删除的链接所属的分类
+        const [link] = await connection.query(
+            'SELECT category FROM links WHERE id = ?',
+            [req.params.id]
+        );
+
+        if (link.length === 0) {
+            await connection.rollback();
+            connection.release();
+            return res.status(404).json({ error: '链接不存在' });
+        }
+
+        const category = link[0].category;
+
+        // 删除链接
+        await connection.query(
             'DELETE FROM links WHERE id = ?',
             [req.params.id]
         );
-        
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ error: '链接不存在' });
+
+        // 检查该分类下是否还有其他链接
+        const [remainingLinks] = await connection.query(
+            'SELECT id FROM links WHERE category = ? LIMIT 1',
+            [category]
+        );
+
+        // 如果没有其他链接，删除分类
+        if (remainingLinks.length === 0) {
+            await connection.query(
+                'DELETE FROM categories WHERE name = ?',
+                [category]
+            );
         }
-        
+
+        await connection.commit();
+        connection.release();
         res.json({ message: '链接删除成功' });
     } catch (error) {
+        if (connection) {
+            await connection.rollback();
+            connection.release();
+        }
+        console.error('删除链接失败:', error);
         res.status(500).json({ error: '删除链接失败' });
     }
 });
@@ -539,27 +575,33 @@ app.delete('/api/categories/:category', async (req, res) => {
     try {
         const category = req.params.category;
         
-        // 先检查分类是否存在
-        const [existing] = await pool.query(
-            'SELECT category FROM links WHERE category = ? LIMIT 1',
-            [category]
-        );
+        // 开始事务
+        const connection = await pool.getConnection();
+        await connection.beginTransaction();
         
-        if (existing.length === 0) {
-            return res.status(404).json({ error: '分类不存在' });
+        try {
+            // 删除该分类下的所有链接
+            await connection.query(
+                'DELETE FROM links WHERE category = ?',
+                [category]
+            );
+            
+            // 删除categories表中的分类
+            await connection.query(
+                'DELETE FROM categories WHERE name = ?',
+                [category]
+            );
+            
+            // 提交事务
+            await connection.commit();
+            connection.release();
+            
+            res.json({ message: '分类删除成功' });
+        } catch (error) {
+            await connection.rollback();
+            connection.release();
+            throw error;
         }
-        
-        // 删除该分类下的所有链接
-        const [result] = await pool.query(
-            'DELETE FROM links WHERE category = ?',
-            [category]
-        );
-        
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ error: '删除分类失败：没有找到相关记录' });
-        }
-        
-        res.json({ message: '分类删除成功' });
     } catch (error) {
         console.error('删除分类失败:', error);
         res.status(500).json({ 

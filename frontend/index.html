@@ -150,8 +150,14 @@
             padding-left: 10px;
         }
 
-        .category-filter select {
+        /* 分类筛选器样式 */
+        .category-filter {
+            position: relative;
             width: 200px;
+        }
+
+        .category-filter select {
+            width: 100%;
             padding: 12px 15px;
             border: 2px solid #e1e8ed;
             border-radius: 8px;
@@ -161,6 +167,14 @@
             cursor: pointer;
             transition: all 0.3s ease;
             height: 45px;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232c3e50' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 15px;
+            padding-right: 45px;
         }
 
         .category-filter select:focus {
@@ -169,15 +183,110 @@
             box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
         }
 
-        .category-select {
-            width: 100%;
-            padding: 8px 15px;
-            border: 2px solid #e1e8ed;
-            border-radius: 8px;
+        .category-filter select:hover {
+            border-color: #007bff;
+        }
+
+        /* 重置默认样式 */
+        .category-filter select::-ms-expand {
+            display: none;
+        }
+
+        /* 美化下拉选项 */
+        .category-filter select option {
+            padding: 12px 15px;
             font-size: 14px;
             color: #2c3e50;
             background-color: white;
-            cursor: pointer;
+            border: none;
+        }
+
+        /* 选项悬停和选中状态 */
+        .category-filter select option:hover,
+        .category-filter select option:focus {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .category-filter select option:checked {
+            background: linear-gradient(0deg, #007bff 0%, #007bff 100%);
+            color: white;
+            font-weight: 500;
+        }
+
+        /* 禁用状态 */
+        .category-filter select:disabled {
+            background-color: #f8f9fa;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .category-filter select option:disabled {
+            color: #999;
+            background-color: #f8f9fa;
+        }
+
+        /* 添加选择框的激活状态效果 */
+        .category-filter::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+        /* 自定义滚动条 */
+        .category-filter select {
+            scrollbar-width: thin;
+            scrollbar-color: #007bff #f0f0f0;
+        }
+
+        .category-filter select::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .category-filter select::-webkit-scrollbar-track {
+            background: #f0f0f0;
+            border-radius: 4px;
+        }
+
+        .category-filter select::-webkit-scrollbar-thumb {
+            background-color: #007bff;
+            border-radius: 4px;
+            border: 2px solid #f0f0f0;
+        }
+
+        .category-filter select::-webkit-scrollbar-thumb:hover {
+            background-color: #0056b3;
+        }
+
+        /* 适配深色模式 */
+        @media (prefers-color-scheme: dark) {
+            .category-filter select {
+                background-color: #2c3e50;
+                color: white;
+                border-color: #4a5568;
+            }
+            
+            .category-filter select option {
+                background-color: #2c3e50;
+                color: white;
+            }
+            
+            .category-filter select option:checked {
+                background: linear-gradient(0deg, #007bff 0%, #007bff 100%);
+            }
+        }
+
+        /* 添加动画效果 */
+        .category-filter select {
+            transform-origin: top;
+            transition: all 0.2s ease;
+        }
+
+        .category-filter select:focus {
+            transform: scale(1.01);
         }
 
         /* 链接列表样式 */
@@ -425,6 +534,8 @@
             color: white;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             animation: slideIn 0.3s ease forwards;
+            font-size: 16px;
+            font-weight: 500;
         }
 
         .toast.success {
@@ -433,6 +544,11 @@
 
         .toast.error {
             background: #dc3545;
+        }
+
+        .toast.info {
+            background: #007bff;
+            color: white;
         }
 
         @keyframes slideIn {
@@ -827,9 +943,240 @@
         .categories-container {
             margin-top: 20px;
         }
+
+        /* 自定义确认对话框样式 */
+        .confirm-dialog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .confirm-dialog {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            transform: translateY(0);
+            animation: slideIn 0.3s ease;
+        }
+
+        .confirm-dialog-title {
+            font-size: 20px;
+            color: #2c3e50;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .confirm-dialog-content {
+            font-size: 16px;
+            color: #4a5568;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .confirm-dialog-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .confirm-dialog-button {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .confirm-dialog-cancel {
+            background: #f7fafc;
+            color: #4a5568;
+        }
+
+        .confirm-dialog-cancel:hover {
+            background: #edf2f7;
+        }
+
+        .confirm-dialog-confirm {
+            background: #3182ce;
+            color: white;
+        }
+
+        .confirm-dialog-confirm:hover {
+            background: #2c5282;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* 自定义下拉框样式 */
+        .custom-select {
+            position: relative;
+            width: 200px;
+            user-select: none;
+        }
+
+        .selected-option {
+            padding: 12px 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #2c3e50;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            padding-right: 45px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .selected-option::after {
+            content: '';
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 10px;
+            height: 10px;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232c3e50' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: contain;
+            transition: transform 0.3s ease;
+        }
+
+        .custom-select.open .selected-option::after {
+            transform: translateY(-50%) rotate(180deg);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            margin-top: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .custom-select.open .dropdown-menu {
+            display: block;
+            animation: dropdownFadeIn 0.2s ease;
+        }
+
+        .dropdown-item {
+            padding: 12px 15px;
+            font-size: 14px;
+            color: #2c3e50;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f8f9fa;
+            color: #007bff;
+        }
+
+        .dropdown-item.selected {
+            background-color: #007bff;
+            color: white;
+        }
+
+        /* 自定义滚动条 */
+        .dropdown-menu::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .dropdown-menu::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .dropdown-menu::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .dropdown-menu::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        @keyframes dropdownFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .link-form .custom-select {
+            width: 100%;
+        }
+
+        .link-form .selected-option {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .link-form .dropdown-menu {
+            width: 100%;
+            box-sizing: border-box;
+        }
     </style>
 </head>
 <body>
+    <!-- 添加确认对话框HTML结构 -->
+    <div id="confirmDialog" class="confirm-dialog-overlay" style="display: none;">
+        <div class="confirm-dialog">
+            <div class="confirm-dialog-title">确认删除</div>
+            <div class="confirm-dialog-content"></div>
+            <div class="confirm-dialog-buttons">
+                <button class="confirm-dialog-button confirm-dialog-cancel" onclick="closeConfirmDialog()">取消</button>
+                <button class="confirm-dialog-button confirm-dialog-confirm" onclick="handleConfirm()">确定</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 侧边栏 -->
     <div class="sidebar">
         <div class="sidebar-toggle" onclick="toggleSidebar()">
@@ -872,9 +1219,13 @@
                             <span class="sort-icon">↓</span>
                         </button>
                         <div class="category-filter">
-                            <select id="categoryFilter" onchange="handleCategoryFilterChange(this.value)">
-                                <option value="all">显示所有分类</option>
-                            </select>
+                            <div class="custom-select" onclick="toggleDropdown(event)">
+                                <div class="selected-option">显示所有分类</div>
+                                <div class="dropdown-menu">
+                                    <div class="dropdown-item selected" data-value="all">显示所有分类</div>
+                                    <!-- 其他选项将通过JavaScript动态添加 -->
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -900,9 +1251,12 @@
                     <div class="link-form">
                         <div class="form-group">
                             <label>选择分类</label>
-                            <select id="categorySelect" class="category-select">
-                                <option value="" disabled selected>请选择分类...</option>
-                            </select>
+                            <div class="custom-select" onclick="toggleDropdown(event)">
+                                <div class="selected-option">请选择分类...</div>
+                                <div class="dropdown-menu">
+                                    <!-- 分类选项将通过JavaScript动态添加 -->
+                                </div>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label for="titleInput">网站名称</label>
@@ -966,26 +1320,32 @@
 
         // 删除链接
         async function deleteLink(linkId) {
-            if (!confirm('确定要删除这个链接吗？')) {
-                return;
-            }
+            showConfirmDialog('确定要删除这个链接吗？', async () => {
+                try {
+                    const response = await fetch(`${baseUrl}/api/links/${encodeURIComponent(linkId)}`, {
+                        method: 'DELETE'
+                    });
 
-            try {
-                const response = await fetch(`${baseUrl}/api/links/${linkId}`, {
-                    method: 'DELETE'
-                });
+                    if (!response.ok) {
+                        throw new Error('删除链接失败');
+                    }
 
-                if (!response.ok) {
-                    throw new Error('删除链接失败');
+                    // 重新加载分类和导航栏
+                    await loadCategories();
+                    await updateSidebarNav();
+                    
+                    // 切换到"显示所有分类"视图
+                    const allCategoriesHeader = document.querySelector('#categoryNav li:first-child .category-nav-header');
+                    if (allCategoriesHeader) {
+                        allCategoriesHeader.click();
+                    }
+                    
+                    showToast('链接删除成功！');
+                } catch (error) {
+                    console.error('删除链接失败:', error);
+                    showToast('删除链接失败: ' + error.message, 'error');
                 }
-
-                const currentCategory = document.getElementById('categoryFilter').value;
-                await loadLinks(currentCategory);
-                showToast('链接删除成功！');
-            } catch (error) {
-                console.error('删除链接失败:', error);
-                showToast('删除链接失败: ' + error.message, 'error');
-            }
+            });
         }
 
         // 搜索功能
@@ -1033,8 +1393,17 @@
 
         // 链接管理
         const linkManager = {
+            isSubmitting: false, // 添加提交状态标记
+
             async addLink() {
-                const category = document.getElementById('categorySelect').value;
+                // 如果正在提交中，直接返回
+                if (this.isSubmitting) {
+                    showToast('正在提交中，请稍候...', 'info');
+                    return;
+                }
+
+                const selectedOption = document.querySelector('.link-form .selected-option');
+                const category = selectedOption.getAttribute('data-value');
                 const title = document.getElementById('titleInput').value.trim();
                 const url = document.getElementById('urlInput').value.trim();
                 const description = document.getElementById('descriptionInput').value.trim();
@@ -1042,6 +1411,16 @@
                 if (!this.validateLinkInput(category, title, url)) return;
 
                 try {
+                    // 设置提交状态为true
+                    this.isSubmitting = true;
+                    // 禁用添加按钮
+                    const addButton = document.querySelector('.add-link-button');
+                    addButton.disabled = true;
+                    addButton.style.backgroundColor = '#ccc';
+                    addButton.style.cursor = 'not-allowed';
+                    // 显示提交中的提示
+                    showToast('正在添加链接，请稍候...', 'info');
+
                     await utils.fetchAPI(`${baseUrl}/api/links`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -1053,6 +1432,14 @@
                     utils.showToast('链接添加成功！');
                 } catch (error) {
                     utils.showToast('添加链接失败: ' + error.message, 'error');
+                } finally {
+                    // 重置提交状态
+                    this.isSubmitting = false;
+                    // 恢复添加按钮
+                    const addButton = document.querySelector('.add-link-button');
+                    addButton.disabled = false;
+                    addButton.style.backgroundColor = '';
+                    addButton.style.cursor = 'pointer';
                 }
             },
 
@@ -1073,10 +1460,9 @@
             },
 
             clearLinkForm() {
-                const categorySelect = document.getElementById('categorySelect');
-                if (categorySelect) {
-                    categorySelect.value = '';
-                }
+                const selectedOption = document.querySelector('.link-form .selected-option');
+                selectedOption.textContent = '请选择分类...';
+                selectedOption.removeAttribute('data-value');
                 document.getElementById('titleInput').value = '';
                 document.getElementById('urlInput').value = '';
                 document.getElementById('descriptionInput').value = '';
@@ -1085,7 +1471,15 @@
 
         // 分类管理
         const categoryManager = {
+            isSubmitting: false, // 添加提交状态标记
+
             async addCategory() {
+                // 如果正在提交中，直接返回
+                if (this.isSubmitting) {
+                    showToast('正在创建分类，请稍候...', 'info');
+                    return;
+                }
+
                 const categoryInput = document.getElementById('categoryInput');
                 const category = categoryInput.value.trim();
                 
@@ -1095,6 +1489,16 @@
                 }
 
                 try {
+                    // 设置提交状态为true
+                    this.isSubmitting = true;
+                    // 禁用添加按钮
+                    const addButton = document.querySelector('.add-button');
+                    addButton.disabled = true;
+                    addButton.style.backgroundColor = '#ccc';
+                    addButton.style.cursor = 'not-allowed';
+                    // 显示提交中的提示
+                    showToast('正在创建分类，请稍候...', 'info');
+
                     await utils.fetchAPI(`${baseUrl}/api/categories`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -1106,6 +1510,14 @@
                     utils.showToast('分类创建成功！');
                 } catch (error) {
                     utils.showToast('添加分类失败: ' + error.message, 'error');
+                } finally {
+                    // 重置提交状态
+                    this.isSubmitting = false;
+                    // 恢复添加按钮
+                    const addButton = document.querySelector('.add-button');
+                    addButton.disabled = false;
+                    addButton.style.backgroundColor = '';
+                    addButton.style.cursor = 'pointer';
                 }
             },
 
@@ -1263,27 +1675,52 @@
                 }
                 const categories = await response.json();
                 
-                const categoryFilter = document.getElementById('categoryFilter');
-                if (categoryFilter) {
-                    categoryFilter.innerHTML = '<option value="all">显示所有分类</option>';
-                    categories.forEach(category => {
-                        const option = document.createElement('option');
-                        option.value = category;
-                        option.textContent = category;
-                        categoryFilter.appendChild(option);
+                // 更新分类筛选器的下拉框
+                const filterDropdownMenu = document.querySelector('.category-filter .dropdown-menu');
+                filterDropdownMenu.innerHTML = `<div class="dropdown-item selected" data-value="all">显示所有分类</div>`;
+                categories.forEach(category => {
+                    filterDropdownMenu.innerHTML += `
+                        <div class="dropdown-item" data-value="${category}">${category}</div>
+                    `;
+                });
+                
+                // 更新添加链接表单的下拉框
+                const addLinkDropdownMenu = document.querySelector('.link-form .dropdown-menu');
+                addLinkDropdownMenu.innerHTML = '';
+                categories.forEach(category => {
+                    addLinkDropdownMenu.innerHTML += `
+                        <div class="dropdown-item" data-value="${category}">${category}</div>
+                    `;
+                });
+                
+                // 添加点击事件
+                document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                    menu.querySelectorAll('.dropdown-item').forEach(item => {
+                        item.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const value = e.target.dataset.value;
+                            const selectedText = e.target.textContent;
+                            const customSelect = e.target.closest('.custom-select');
+                            const selectedOption = customSelect.querySelector('.selected-option');
+                            
+                            // 更新选中状态
+                            menu.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('selected'));
+                            e.target.classList.add('selected');
+                            
+                            // 更新显示文本和值
+                            selectedOption.textContent = selectedText;
+                            selectedOption.setAttribute('data-value', value);
+                            
+                            // 如果是分类筛选器，触发分类切换
+                            if (customSelect.closest('.category-filter')) {
+                                handleCategoryFilterChange(value);
+                            }
+                            
+                            // 关闭下拉框
+                            customSelect.classList.remove('open');
+                        });
                     });
-                }
-
-                const categorySelect = document.getElementById('categorySelect');
-                if (categorySelect) {
-                    categorySelect.innerHTML = '<option value="" disabled selected>请选择分类...</option>';
-                    categories.forEach(category => {
-                        const option = document.createElement('option');
-                        option.value = category;
-                        option.textContent = category;
-                        categorySelect.appendChild(option);
-                    });
-                }
+                });
 
                 await loadLinks('all');
             } catch (error) {
@@ -1459,7 +1896,7 @@
                 </div>
                 <div class="link-actions">
                     <button class="edit-button" onclick="editLink('${link.id}', '${link.title}', '${link.url}', '${link.description || ''}')">编辑</button>
-                    <button class="delete-button" onclick="deleteLink('${link.id}')">删除</button>
+                    <button class="delete-button" onclick="deleteLink('${encodeURIComponent(link.id)}')">删除</button>
                 </div>
             `;
             return linkItem;
@@ -1471,41 +1908,95 @@
         }
 
         // 导入链接
-        function importLinks() {
+        let isImporting = false;
+        async function importLinks() {
+            if (isImporting) {
+                showToast('正在导入链接，请稍候...', 'info');
+                return;
+            }
+
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = '.json';
             input.onchange = async (e) => {
                 const file = e.target.files[0];
-                const reader = new FileReader();
-                reader.onload = async (event) => {
-                    try {
-                        const links = JSON.parse(event.target.result);
-                        const response = await fetch(`${baseUrl}/api/import`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ links })
-                        });
-                        if (response.ok) {
-                            showToast('链接导入成功！');
-                            await loadCategories();
-                        } else {
-                            throw new Error('服务器响应错误');
+                if (!file) return;
+
+                try {
+                    isImporting = true;
+                    // 禁用所有工具箱按钮
+                    const toolButtons = document.querySelectorAll('.action-button');
+                    toolButtons.forEach(btn => {
+                        btn.disabled = true;
+                        btn.style.backgroundColor = '#ccc';
+                        btn.style.cursor = 'not-allowed';
+                    });
+                    // 显示导入中的提示
+                    showToast('正在导入链接，请稍候...', 'info');
+
+                    const reader = new FileReader();
+                    reader.onload = async (event) => {
+                        try {
+                            const links = JSON.parse(event.target.result);
+                            const response = await fetch(`${baseUrl}/api/import`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ links })
+                            });
+                            
+                            if (response.ok) {
+                                showToast('链接导入成功！');
+                                await loadCategories();
+                            } else {
+                                throw new Error('服务器响应错误');
+                            }
+                        } catch (error) {
+                            console.error('导入链接失败:', error);
+                            showToast('导入链接失败，请确保文件格式正确', 'error');
                         }
-                    } catch (error) {
-                        console.error('导入链接失败:', error);
-                        showToast('导入链接失败，请确保文件格式正确且后端服务器已启动', 'error');
-                    }
-                };
-                reader.readAsText(file);
+                    };
+                    reader.readAsText(file);
+                } catch (error) {
+                    console.error('导入链接失败:', error);
+                    showToast('导入链接失败: ' + error.message, 'error');
+                } finally {
+                    isImporting = false;
+                    // 恢复所有工具箱按钮
+                    const toolButtons = document.querySelectorAll('.action-button');
+                    toolButtons.forEach(btn => {
+                        btn.disabled = false;
+                        btn.style.backgroundColor = '';
+                        btn.style.cursor = 'pointer';
+                    });
+                }
             };
             input.click();
         }
 
         // 导出链接
+        let isExporting = false;
         async function exportLinks() {
+            if (isExporting) {
+                showToast('正在导出链接，请稍候...', 'info');
+                return;
+            }
+
             try {
+                isExporting = true;
+                // 禁用所有工具箱按钮
+                const toolButtons = document.querySelectorAll('.action-button');
+                toolButtons.forEach(btn => {
+                    btn.disabled = true;
+                    btn.style.backgroundColor = '#ccc';
+                    btn.style.cursor = 'not-allowed';
+                });
+                // 显示导出中的提示
+                showToast('正在导出链接，请稍候...', 'info');
+
                 const response = await fetch(`${baseUrl}/api/export`);
+                if (!response.ok) {
+                    throw new Error('导出失败');
+                }
                 const links = await response.json();
                 const blob = new Blob([JSON.stringify(links, null, 2)], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
@@ -1514,24 +2005,175 @@
                 a.download = 'links.json';
                 a.click();
                 URL.revokeObjectURL(url);
+                showToast('链接导出成功！');
             } catch (error) {
                 console.error('导出链接失败:', error);
-                showToast('导出链接失败，请确保后端服务器已启动', 'error');
+                showToast('导出链接失败: ' + error.message, 'error');
+            } finally {
+                isExporting = false;
+                // 恢复所有工具箱按钮
+                const toolButtons = document.querySelectorAll('.action-button');
+                toolButtons.forEach(btn => {
+                    btn.disabled = false;
+                    btn.style.backgroundColor = '';
+                    btn.style.cursor = 'pointer';
+                });
             }
         }
 
         // 检查链接
+        let isChecking = false;
         async function checkLinks() {
+            if (isChecking) {
+                showToast('正在检查链接，请稍候...', 'info');
+                return;
+            }
+
             try {
-                const response = await fetch(`${baseUrl}/api/check-links`, { method: 'POST' });
-                if (response.ok) {
-                    showToast('链接检查已开始，请稍后查看结果');
+                isChecking = true;
+                // 禁用所有工具箱按钮
+                const toolButtons = document.querySelectorAll('.action-button');
+                toolButtons.forEach(btn => {
+                    btn.disabled = true;
+                    btn.style.backgroundColor = '#ccc';
+                    btn.style.cursor = 'not-allowed';
+                });
+                // 显示检查中的提示
+                showToast('正在检查链接，请稍候...', 'info');
+
+                // 获取所有链接
+                const response = await fetch(`${baseUrl}/api/all-links`);
+                if (!response.ok) {
+                    throw new Error('获取链接失败');
+                }
+                
+                const links = await response.json();
+                const results = {
+                    total: links.length,
+                    success: 0,
+                    failed: 0,
+                    failedLinks: []
+                };
+                
+                // 创建进度对话框
+                const progressDialog = document.createElement('div');
+                progressDialog.className = 'confirm-dialog-overlay';
+                progressDialog.style.display = 'flex';
+                progressDialog.innerHTML = `
+                    <div class="confirm-dialog" style="background: #2c3e50; color: white; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
+                        <div class="confirm-dialog-title" style="color: white; font-size: 22px; border-bottom: 2px solid #34495e; padding-bottom: 15px;">检查链接进度</div>
+                        <div class="confirm-dialog-content" style="padding: 20px 0;">
+                            <div id="checkProgress" style="font-size: 16px; color: white; margin-bottom: 15px;">正在检查: 0/${links.length}</div>
+                            <div id="checkResults" style="font-size: 16px; color: white;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                    <span>成功:</span>
+                                    <span style="color: #2ecc71">0</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>失败:</span>
+                                    <span style="color: #e74c3c">0</span>
+                                </div>
+                            </div>
+                            <div style="width: 100%; height: 4px; background: #34495e; margin-top: 20px; border-radius: 2px;">
+                                <div id="progressBar" style="width: 0%; height: 100%; background: #3498db; border-radius: 2px; transition: width 0.3s ease;"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(progressDialog);
+                
+                // 更新进度显示
+                const progressElement = document.getElementById('checkProgress');
+                const resultsElement = document.getElementById('checkResults');
+                const progressBar = document.getElementById('progressBar');
+                
+                // 并发检查链接
+                const checkPromises = links.map(async (link, index) => {
+                    try {
+                        const response = await fetch(link.url, { method: 'HEAD', mode: 'no-cors' });
+                        results.success++;
+                    } catch (error) {
+                        results.failed++;
+                        results.failedLinks.push({
+                            title: link.title,
+                            url: link.url,
+                            error: error.message
+                        });
+                    }
+                    
+                    // 更新进度
+                    const progress = ((index + 1) / links.length) * 100;
+                    progressElement.textContent = `正在检查: ${index + 1}/${links.length}`;
+                    progressBar.style.width = `${progress}%`;
+                    resultsElement.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span>成功:</span>
+                            <span style="color: #2ecc71">${results.success}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>失败:</span>
+                            <span style="color: #e74c3c">${results.failed}</span>
+                        </div>
+                    `;
+                });
+                
+                // 等待所有检查完成
+                await Promise.all(checkPromises);
+                
+                // 显示最终结果
+                progressDialog.remove();
+                
+                if (results.failed > 0) {
+                    // 创建结果对话框
+                    const resultDialog = document.createElement('div');
+                    resultDialog.className = 'confirm-dialog-overlay';
+                    resultDialog.style.display = 'flex';
+                    resultDialog.innerHTML = `
+                        <div class="confirm-dialog" style="background: #2c3e50; color: white;">
+                            <div class="confirm-dialog-title" style="color: white; font-size: 22px; border-bottom: 2px solid #34495e; padding-bottom: 15px;">链接检查结果</div>
+                            <div class="confirm-dialog-content" style="max-height: 70vh; overflow-y: auto;">
+                                <div style="padding: 20px 0;">
+                                    <p style="font-size: 18px; color: white; margin-bottom: 20px;">检查完成！</p>
+                                    <div style="display: grid; grid-template-columns: auto auto; gap: 10px; margin-bottom: 20px;">
+                                        <div style="text-align: right; color: #bdc3c7;">总计:</div>
+                                        <div style="color: white;">${results.total}</div>
+                                        <div style="text-align: right; color: #bdc3c7;">成功:</div>
+                                        <div style="color: #2ecc71;">${results.success}</div>
+                                        <div style="text-align: right; color: #bdc3c7;">失败:</div>
+                                        <div style="color: #e74c3c;">${results.failed}</div>
+                                    </div>
+                                    <div style="margin-top: 20px;">
+                                        <p style="font-size: 16px; color: white; margin-bottom: 15px;">失败的链接：</p>
+                                        ${results.failedLinks.map(link => `
+                                            <div style="background: #34495e; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                                                <p style="color: white; font-weight: 500; margin-bottom: 5px;">${link.title}</p>
+                                                <a href="${link.url}" target="_blank" style="color: #3498db; text-decoration: none; word-break: break-all;">${link.url}</a>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="confirm-dialog-buttons" style="border-top: 2px solid #34495e; padding-top: 15px;">
+                                <button class="confirm-dialog-button confirm-dialog-confirm" style="background: #3498db;" onclick="this.closest('.confirm-dialog-overlay').remove()">关闭</button>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(resultDialog);
                 } else {
-                    throw new Error('服务器响应错误');
+                    showToast('所有链接检查完成，全部可用！', 'success');
                 }
             } catch (error) {
                 console.error('检查链接失败:', error);
-                showToast('检查链接失败，请确保后端服务器已启动', 'error');
+                showToast('检查链接失败: ' + error.message, 'error');
+            } finally {
+                isChecking = false;
+                // 恢复所有工具箱按钮
+                const toolButtons = document.querySelectorAll('.action-button');
+                toolButtons.forEach(btn => {
+                    btn.disabled = false;
+                    btn.style.backgroundColor = '';
+                    btn.style.cursor = 'pointer';
+                });
             }
         }
 
@@ -1577,27 +2219,25 @@
 
         // 删除分类
         async function deleteCategory(category) {
-            if (!confirm(`确定要删除分类"${category}"及其所有链接吗？`)) {
-                return;
-            }
+            showConfirmDialog(`确定要删除分类"${category}"及其所有链接吗？`, async () => {
+                try {
+                    const response = await fetch(`${baseUrl}/api/categories/${encodeURIComponent(category)}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('删除分类失败');
+                    }
 
-            try {
-                const response = await fetch(`${baseUrl}/api/categories/${encodeURIComponent(category)}`, {
-                    method: 'DELETE'
-                });
-                
-                if (!response.ok) {
-                    throw new Error('删除分类失败');
+                    await loadCategories();
+                    await updateSidebarNav();
+                    await loadLinks('all');
+                    showToast('分类删除成功！');
+                } catch (error) {
+                    console.error('删除分类失败:', error);
+                    showToast('删除分类失败: ' + error.message, 'error');
                 }
-
-                await loadCategories();
-                await updateSidebarNav();
-                await loadLinks('all');
-                showToast('分类删除成功！');
-            } catch (error) {
-                console.error('删除分类失败:', error);
-                showToast('删除分类失败: ' + error.message, 'error');
-            }
+            });
         }
 
         // 编辑链接
@@ -1819,6 +2459,46 @@
             } catch (error) {
                 console.error('加载分类导航失败:', error);
                 showToast('加载分类导航失败: ' + error.message, 'error');
+            }
+        }
+
+        // 添加确认对话框相关函数
+        let confirmCallback = null;
+
+        function showConfirmDialog(message, callback) {
+            const dialog = document.getElementById('confirmDialog');
+            const content = dialog.querySelector('.confirm-dialog-content');
+            content.textContent = message;
+            dialog.style.display = 'flex';
+            confirmCallback = callback;
+        }
+
+        function closeConfirmDialog() {
+            const dialog = document.getElementById('confirmDialog');
+            dialog.style.display = 'none';
+            confirmCallback = null;
+        }
+
+        function handleConfirm() {
+            if (confirmCallback) {
+                confirmCallback();
+            }
+            closeConfirmDialog();
+        }
+
+        // 添加自定义下拉框相关函数
+        function toggleDropdown(event) {
+            const select = event.currentTarget;
+            select.classList.toggle('open');
+            
+            // 点击外部关闭下拉框
+            if (select.classList.contains('open')) {
+                document.addEventListener('click', function closeDropdown(e) {
+                    if (!select.contains(e.target)) {
+                        select.classList.remove('open');
+                        document.removeEventListener('click', closeDropdown);
+                    }
+                });
             }
         }
     </script>
