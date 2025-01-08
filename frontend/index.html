@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TC</title>
+    <!-- 添加网站图标 -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <style>
         /* 基础样式重置 */
         * {
@@ -917,6 +919,10 @@
         // 定义全局baseUrl
         const baseUrl = 'http://localhost:3000';
 
+        // 添加全局变量
+        let currentExpandedCategory = null;
+        let isCategoryDescSort = true; // 默认降序（最新创建的在前）
+
         // 添加滚动到顶部的辅助函数
         function scrollToTop() {
             window.scrollTo({
@@ -1116,12 +1122,14 @@
             if (sortButton) {
                 sortButton.classList.toggle('desc', isCategoryDescSort);
             }
-            reloadCategoriesWithSort();
+            // 保存当前展开的分类
+            const expandedCategory = currentExpandedCategory;
+            reloadCategoriesWithSort(expandedCategory);
             scrollToTop();
         }
 
         // 更新分类重新加载函数
-        async function reloadCategoriesWithSort() {
+        async function reloadCategoriesWithSort(expandedCategory = null) {
             try {
                 console.log('开始重新加载分类...');
                 console.log('当前排序方向:', isCategoryDescSort ? 'desc' : 'asc');
@@ -1132,7 +1140,38 @@
                 }
                 const categories = await response.json();
                 
+                // 保存当前选中的分类
+                const currentSelectedCategory = document.querySelector('.category-nav-header.active .category-name')?.textContent;
+                
                 await updateSidebarNav();
+                
+                // 如果有展开的分类，重新展开它
+                if (expandedCategory) {
+                    const categoryElement = Array.from(document.querySelectorAll('.category-name'))
+                        .find(span => span.textContent === expandedCategory)
+                        ?.closest('.category-nav-item');
+                    
+                    if (categoryElement) {
+                        const header = categoryElement.querySelector('.category-nav-header');
+                        const toggle = categoryElement.querySelector('.category-nav-toggle');
+                        const links = categoryElement.querySelector('.category-nav-links');
+                        
+                        toggle.classList.add('expanded');
+                        links.classList.add('expanded');
+                        currentExpandedCategory = expandedCategory;
+                        
+                        // 重新加载该分类的链接
+                        const linksResponse = await fetch(`${baseUrl}/api/links/${encodeURIComponent(expandedCategory)}`);
+                        if (linksResponse.ok) {
+                            const categoryLinks = await linksResponse.json();
+                            links.innerHTML = categoryLinks.map(link => `
+                                <a href="${link.url}" class="category-nav-link" target="_blank" title="${link.description || ''}">
+                                    ${link.title}
+                                </a>
+                            `).join('');
+                        }
+                    }
+                }
                 
                 const categoryFilter = document.getElementById('categoryFilter');
                 if (categoryFilter) {
@@ -1162,7 +1201,16 @@
                 
                 const currentCategory = categoryFilter ? categoryFilter.value : 'all';
                 await loadLinks(currentCategory);
-                scrollToTop();
+                
+                // 恢复选中状态
+                if (currentSelectedCategory) {
+                    const categoryHeader = Array.from(document.querySelectorAll('.category-name'))
+                        .find(span => span.textContent === currentSelectedCategory)
+                        ?.closest('.category-nav-header');
+                    if (categoryHeader) {
+                        categoryHeader.classList.add('active');
+                    }
+                }
                 
                 showToast(`分类已${isCategoryDescSort ? '降序' : '升序'}排列`);
             } catch (error) {
@@ -1182,9 +1230,6 @@
                 alert('初始化失败: ' + error.message);
             }
         });
-
-        // 添加排序状态变量
-        let isCategoryDescSort = true; // 默认降序（最新创建的在前）
 
         // 加载分类列表
         async function loadCategories() {
@@ -1581,7 +1626,6 @@
             nav.innerHTML = '';
 
             const categoryElements = new Map();
-            let currentExpandedCategory = null;
 
             try {
                 const allCategoriesLi = document.createElement('li');
