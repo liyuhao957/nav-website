@@ -3203,8 +3203,15 @@
             if (customSelect.closest('.category-filter')) {
                 console.log('触发分类过滤');
                 handleCategoryFilterChange(value);
-            } else {
-                console.log('不触发分类过滤，这是添加链接的选择框');
+            } else if (customSelect.closest('.link-form')) {
+                console.log('添加链接表单选择分类:', value);
+                // 同步更新分类过滤器的选择
+                const filterSelect = document.querySelector('.category-filter .selected-option');
+                if (filterSelect) {
+                    filterSelect.textContent = text;
+                    filterSelect.setAttribute('data-value', value);
+                    handleCategoryFilterChange(value);
+                }
             }
         }
 
