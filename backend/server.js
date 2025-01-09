@@ -824,11 +824,34 @@ app.put('/api/links/:id', async (req, res) => {
         if (existing.length === 0) {
             return res.status(404).json({ error: '链接不存在' });
         }
+
+        // 获取新的favicon
+        console.log('[updateLink] 开始获取新的favicon...');
+        const newFavicon = await getFavicon(url);
         
-        const success = await Link.update(id, { title, url, description });
+        // 更新链接信息，包括新的favicon
+        const success = await Link.update(id, { 
+            title, 
+            url, 
+            description,
+            favicon: newFavicon || '/favicon.svg' // 如果获取失败则使用默认favicon
+        });
         
         if (success) {
-            res.json({ message: '链接更新成功' });
+            // 获取更新后的完整链接信息
+            const [updatedLink] = await pool.query(
+                'SELECT * FROM links WHERE id = ?',
+                [id]
+            );
+            
+            if (updatedLink.length > 0) {
+                res.json({ 
+                    message: '链接更新成功',
+                    link: updatedLink[0]
+                });
+            } else {
+                res.status(404).json({ error: '无法获取更新后的链接信息' });
+            }
         } else {
             res.status(404).json({ error: '链接不存在' });
         }

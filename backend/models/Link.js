@@ -1,7 +1,7 @@
 const mysql = require('mysql2/promise');
 
 class Link {
-    static async update(id, { title, url, description }) {
+    static async update(id, { title, url, description, favicon }) {
         const connection = await mysql.createConnection({
             host: process.env.MYSQL_HOST || '159.75.107.196',
             user: process.env.MYSQL_USER || 'root',
@@ -10,8 +10,8 @@ class Link {
         });
         try {
             const [result] = await connection.execute(
-                'UPDATE links SET title = ?, url = ?, description = ? WHERE id = ?',
-                [title, url, description, id]
+                'UPDATE links SET title = ?, url = ?, description = ?, favicon = ? WHERE id = ?',
+                [title, url, description, favicon, id]
             );
             return result.affectedRows > 0;
         } catch (error) {
