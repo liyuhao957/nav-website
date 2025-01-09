@@ -1473,6 +1473,57 @@
         .add-note-button:hover {
             background: #0056b3;
         }
+
+        /* 添加笔记拖拽相关样式 */
+        .note-card {
+            cursor: move; /* 显示可拖动的光标 */
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .note-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        .note-card-ghost {
+            opacity: 0.5;
+            background: #f8f9fa;
+        }
+
+        /* 笔记排序按钮样式 */
+        .notes-section .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .notes-section .sort-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            background: #f8f9fa;
+        }
+
+        .notes-section .sort-button:hover {
+            background: #e9ecef;
+        }
+
+        .notes-section .sort-icon {
+            display: inline-block;
+            transition: transform 0.3s ease;
+        }
+
+        .notes-section .sort-button.desc .sort-icon {
+            transform: rotate(180deg);
+        }
     </style>
 </head>
 <body>
@@ -1572,6 +1623,11 @@
                     </div>
                     <div class="section-header">
                         <h2 class="section-title">笔记列表</h2>
+                        <div class="header-controls">
+                            <button class="sort-button" onclick="toggleNoteSort()" title="切换时间排序">
+                                <span class="sort-icon">↓</span>
+                            </button>
+                        </div>
                     </div>
                     <div class="notes-list" id="notesList">
                         <!-- 笔记列表将通过JavaScript动态添加 -->
@@ -1683,12 +1739,26 @@
         // 分类排序方向
         let isCategoryDescSort = false;
         
+        // 当前展开的分类
+        let currentExpandedCategory = null;
+        
         // 处理favicon URL的辅助函数
         function getFaviconUrl(favicon) {
-            if (!favicon) return defaultFaviconUrl;
-            if (favicon.startsWith('http')) return favicon;
+            console.log('[getFaviconUrl] 开始处理favicon:', favicon);
+            if (!favicon) {
+                console.log('[getFaviconUrl] favicon为空，返回默认图标');
+                return '/favicon.svg';
+            }
+            
             // 如果是相对路径，添加baseUrl
-            return baseUrl + favicon;
+            if (!favicon.startsWith('http')) {
+                const result = baseUrl + favicon;
+                console.log('[getFaviconUrl] 转换相对路径:', favicon, '->', result);
+                return result;
+            }
+            
+            console.log('[getFaviconUrl] 使用原始favicon:', favicon);
+            return favicon;
         }
 
         // 记录访问次数
@@ -1777,7 +1847,6 @@
             isSubmitting: false, // 添加提交状态标记
 
             async addLink() {
-                // 如果正在提交中，直接返回
                 if (this.isSubmitting) {
                     showToast('正在提交中，请稍候...', 'info');
                     return;
@@ -1792,21 +1861,29 @@
                 if (!this.validateLinkInput(category, title, url)) return;
 
                 try {
-                    // 设置提交状态为true
                     this.isSubmitting = true;
-                    // 禁用添加按钮
                     const addButton = document.querySelector('.add-link-button');
                     addButton.disabled = true;
                     addButton.style.backgroundColor = '#ccc';
                     addButton.style.cursor = 'not-allowed';
-                    // 显示提交中的提示
                     showToast('正在添加链接，请稍候...', 'info');
 
-                    await utils.fetchAPI(`${baseUrl}/api/links`, {
+                    const response = await fetch(`${baseUrl}/api/links`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ category, title, url, description })
                     });
+
+                    if (!response.ok) {
+                        throw new Error('添加链接失败');
+                    }
+
+                    const result = await response.json();
+                    
+                    // 添加成功后，自动更新favicon
+                    if (result.link && result.link.id) {
+                        await updateLinkFavicon(result.link.id);
+                    }
 
                     this.clearLinkForm();
                     await loadLinks(category);
@@ -1814,9 +1891,7 @@
                 } catch (error) {
                     utils.showToast('添加链接失败: ' + error.message, 'error');
                 } finally {
-                    // 重置提交状态
                     this.isSubmitting = false;
-                    // 恢复添加按钮
                     const addButton = document.querySelector('.add-link-button');
                     addButton.disabled = false;
                     addButton.style.backgroundColor = '';
@@ -2181,9 +2256,13 @@
 
         // 修改loadLinks函数
         async function loadLinks(category = 'all') {
-            console.log(`loadLinks 被调用，参数: ${category}`);
             try {
-                // 直接调用filterLinksByCategory，不使用防抖
+                const timestamp = new Date().getTime();
+                const response = await fetch(`${baseUrl}/api/links/${encodeURIComponent(category)}?t=${timestamp}`);
+                if (!response.ok) {
+                    throw new Error('获取链接失败');
+                }
+                const links = await response.json();
                 await filterLinksByCategory(category);
             } catch (error) {
                 console.error('加载链接失败:', error);
@@ -2396,155 +2475,117 @@
         let isChecking = false;
         async function checkLinks() {
             if (isChecking) {
-                showToast('正在检查链接，请稍候...', 'info');
+                utils.showToast('正在检查链接，请稍候...', 'info');
                 return;
             }
 
             try {
                 isChecking = true;
-                // 禁用所有工具箱按钮
-                const toolButtons = document.querySelectorAll('.action-button');
-                toolButtons.forEach(btn => {
-                    btn.disabled = true;
-                    btn.style.backgroundColor = '#ccc';
-                    btn.style.cursor = 'not-allowed';
-                });
-                // 显示检查中的提示
-                showToast('正在检查链接，请稍候...', 'info');
+                utils.showToast('开始检查链接...', 'info');
+                console.log('开始检查链接...');
 
-                // 获取所有链接
-                const response = await fetch(`${baseUrl}/api/all-links`);
-                if (!response.ok) {
-                    throw new Error('获取链接失败');
-                }
-                
-                const links = await response.json();
-                const results = {
-                    total: links.length,
-                    success: 0,
-                    failed: 0,
-                    failedLinks: []
-                };
-                
-                // 创建进度对话框
+                // 创建遮罩层
+                const overlay = document.createElement('div');
+                overlay.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.5);
+                    z-index: 9999;
+                `;
+                document.body.appendChild(overlay);
+
+                // 显示进度对话框
                 const progressDialog = document.createElement('div');
-                progressDialog.className = 'confirm-dialog-overlay';
-                progressDialog.style.display = 'flex';
+                progressDialog.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: white;
+                    padding: 20px;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                    z-index: 10000;
+                    min-width: 300px;
+                    max-width: 80%;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                `;
                 progressDialog.innerHTML = `
-                    <div class="confirm-dialog" style="background: #2c3e50; color: white; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
-                        <div class="confirm-dialog-title" style="color: white; font-size: 22px; border-bottom: 2px solid #34495e; padding-bottom: 15px;">检查链接进度</div>
-                        <div class="confirm-dialog-content" style="padding: 20px 0;">
-                            <div id="checkProgress" style="font-size: 16px; color: white; margin-bottom: 15px;">正在检查: 0/${links.length}</div>
-                            <div id="checkResults" style="font-size: 16px; color: white;">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                                    <span>成功:</span>
-                                    <span style="color: #2ecc71">0</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between;">
-                                    <span>失败:</span>
-                                    <span style="color: #e74c3c">0</span>
-                                </div>
-                            </div>
-                            <div style="width: 100%; height: 4px; background: #34495e; margin-top: 20px; border-radius: 2px;">
-                                <div id="progressBar" style="width: 0%; height: 100%; background: #3498db; border-radius: 2px; transition: width 0.3s ease;"></div>
-                            </div>
+                    <div class="dialog-content">
+                        <h2 style="margin-bottom: 15px; color: #333;">检查链接</h2>
+                        <p id="checkProgress" style="margin-bottom: 10px; color: #666;">正在检查链接有效性...</p>
+                        <div style="background: #eee; height: 20px; border-radius: 10px; overflow: hidden; margin-bottom: 15px;">
+                            <div class="progress-bar-fill" style="width: 0%; height: 100%; background: #4CAF50; transition: width 0.3s;"></div>
                         </div>
+                        <div id="checkResults" style="max-height: 300px; overflow-y: auto;"></div>
                     </div>
                 `;
                 document.body.appendChild(progressDialog);
-                
-                // 更新进度显示
-                const progressElement = document.getElementById('checkProgress');
-                const resultsElement = document.getElementById('checkResults');
-                const progressBar = document.getElementById('progressBar');
-                
-                // 并发检查链接
-                const checkPromises = links.map(async (link, index) => {
-                    try {
-                        const response = await fetch(link.url, { method: 'HEAD', mode: 'no-cors' });
-                        results.success++;
-                    } catch (error) {
-                        results.failed++;
-                        results.failedLinks.push({
-                            title: link.title,
-                            url: link.url,
-                            error: error.message
-                        });
-                    }
-                    
-                    // 更新进度
-                    const progress = ((index + 1) / links.length) * 100;
-                    progressElement.textContent = `正在检查: ${index + 1}/${links.length}`;
-                    progressBar.style.width = `${progress}%`;
-                    resultsElement.innerHTML = `
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                            <span>成功:</span>
-                            <span style="color: #2ecc71">${results.success}</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between;">
-                            <span>失败:</span>
-                            <span style="color: #e74c3c">${results.failed}</span>
-                        </div>
-                    `;
+
+                // 更新进度条动画
+                const progressBar = progressDialog.querySelector('.progress-bar-fill');
+                progressBar.style.width = '30%';
+
+                console.log('调用后端API检查链接...');
+                // 调用后端API检查链接
+                const response = await fetch(`${baseUrl}/api/check-links`, {
+                    method: 'POST'
                 });
-                
-                // 等待所有检查完成
-                await Promise.all(checkPromises);
-                
-                // 显示最终结果
-                progressDialog.remove();
-                
-                if (results.failed > 0) {
-                    // 创建结果对话框
-                    const resultDialog = document.createElement('div');
-                    resultDialog.className = 'confirm-dialog-overlay';
-                    resultDialog.style.display = 'flex';
-                    resultDialog.innerHTML = `
-                        <div class="confirm-dialog" style="background: #2c3e50; color: white;">
-                            <div class="confirm-dialog-title" style="color: white; font-size: 22px; border-bottom: 2px solid #34495e; padding-bottom: 15px;">链接检查结果</div>
-                            <div class="confirm-dialog-content" style="max-height: 70vh; overflow-y: auto;">
-                                <div style="padding: 20px 0;">
-                                    <p style="font-size: 18px; color: white; margin-bottom: 20px;">检查完成！</p>
-                                    <div style="display: grid; grid-template-columns: auto auto; gap: 10px; margin-bottom: 20px;">
-                                        <div style="text-align: right; color: #bdc3c7;">总计:</div>
-                                        <div style="color: white;">${results.total}</div>
-                                        <div style="text-align: right; color: #bdc3c7;">成功:</div>
-                                        <div style="color: #2ecc71;">${results.success}</div>
-                                        <div style="text-align: right; color: #bdc3c7;">失败:</div>
-                                        <div style="color: #e74c3c;">${results.failed}</div>
-                                    </div>
-                                    <div style="margin-top: 20px;">
-                                        <p style="font-size: 16px; color: white; margin-bottom: 15px;">失败的链接：</p>
-                                        ${results.failedLinks.map(link => `
-                                            <div style="background: #34495e; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
-                                                <p style="color: white; font-weight: 500; margin-bottom: 5px;">${link.title}</p>
-                                                <a href="${link.url}" target="_blank" style="color: #3498db; text-decoration: none; word-break: break-all;">${link.url}</a>
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="confirm-dialog-buttons" style="border-top: 2px solid #34495e; padding-top: 15px;">
-                                <button class="confirm-dialog-button confirm-dialog-confirm" style="background: #3498db;" onclick="this.closest('.confirm-dialog-overlay').remove()">关闭</button>
-                            </div>
-                        </div>
-                    `;
-                    document.body.appendChild(resultDialog);
-                } else {
-                    showToast('所有链接检查完成，全部可用！', 'success');
+
+                if (!response.ok) {
+                    throw new Error('检查链接失败');
                 }
+
+                progressBar.style.width = '70%';
+                console.log('获取检查结果...');
+
+                const data = await response.json();
+                const results = data.results;
+                console.log('检查结果:', results);
+
+                // 统计结果
+                const validLinks = results.filter(link => link.isValid);
+                const invalidLinks = results.filter(link => !link.isValid);
+                console.log(`有效链接: ${validLinks.length}, 无效链接: ${invalidLinks.length}`);
+
+                progressBar.style.width = '100%';
+
+                // 更新结果显示
+                const resultsElement = document.getElementById('checkResults');
+                if (invalidLinks.length > 0) {
+                    resultsElement.innerHTML = `
+                        <p style="color: #f44336; margin-bottom: 10px; font-weight: bold;">
+                            检查完成！发现 ${invalidLinks.length} 个无效链接：
+                        </p>
+                        <ul style="list-style: none; padding: 0;">
+                            ${invalidLinks.map(link => `
+                                <li style="padding: 12px; background: #ffebee; margin-bottom: 8px; border-radius: 4px;">
+                                    <div style="font-weight: bold; margin-bottom: 4px;">${link.title}</div>
+                                    <div style="color: #666; word-break: break-all; font-size: 0.9em;">${link.url}</div>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    `;
+                    utils.showToast(`发现 ${invalidLinks.length} 个无效链接`, 'warning');
+                } else {
+                    resultsElement.innerHTML = '<p style="color: #4CAF50; font-weight: bold;">所有链接检查完成，全部可用！</p>';
+                    utils.showToast('所有链接检查完成，全部可用！', 'success');
+                }
+
+                // 5秒后自动关闭对话框
+                setTimeout(() => {
+                    document.body.removeChild(overlay);
+                    document.body.removeChild(progressDialog);
+                }, 5000);
             } catch (error) {
                 console.error('检查链接失败:', error);
-                showToast('检查链接失败: ' + error.message, 'error');
+                utils.showToast('检查链接失败: ' + error.message, 'error');
             } finally {
                 isChecking = false;
-                // 恢复所有工具箱按钮
-                const toolButtons = document.querySelectorAll('.action-button');
-                toolButtons.forEach(btn => {
-                    btn.disabled = false;
-                    btn.style.backgroundColor = '';
-                    btn.style.cursor = 'pointer';
-                });
             }
         }
 
@@ -3222,13 +3263,46 @@
 
             async loadNotes() {
                 try {
-                    const response = await fetch(`${baseUrl}/api/notes`);
+                    const response = await fetch(`${baseUrl}/api/notes?sort=${isNoteDescSort ? 'desc' : 'asc'}`);
                     if (!response.ok) {
                         throw new Error('获取笔记失败');
                     }
 
                     const notes = await response.json();
                     this.renderNotes(notes);
+
+                    // 初始化拖拽排序
+                    const notesList = document.getElementById('notesList');
+                    if (notesList) {
+                        new Sortable(notesList, {
+                            animation: 150,
+                            ghostClass: 'note-card-ghost',
+                            onEnd: async function(evt) {
+                                const noteIds = Array.from(notesList.children).map(
+                                    card => card.getAttribute('data-note-id')
+                                );
+                                
+                                try {
+                                    const response = await fetch(`${baseUrl}/api/notes/reorder`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({ noteIds })
+                                    });
+                                    
+                                    if (!response.ok) {
+                                        throw new Error('更新笔记顺序失败');
+                                    }
+                                    
+                                    showToast('笔记顺序更新成功');
+                                } catch (error) {
+                                    console.error('更新笔记顺序失败:', error);
+                                    showToast('更新笔记顺序失败', 'error');
+                                }
+                            }
+                        });
+                    }
                 } catch (error) {
                     console.error('加载笔记失败:', error);
                     utils.showToast('加载笔记失败', 'error');
@@ -3246,6 +3320,9 @@
                 const confirmBtn = confirmDialog.querySelector('.confirm-dialog-confirm');
                 const originalOnClick = confirmBtn.onclick;
                 confirmBtn.onclick = async () => {
+                    // 立即关闭对话框
+                    confirmDialog.style.display = 'none';
+                    
                     try {
                         const response = await fetch(`${baseUrl}/api/notes/${id}`, {
                             method: 'DELETE'
@@ -3285,8 +3362,6 @@
                     } finally {
                         // 恢复确认按钮的原始事件处理程序
                         confirmBtn.onclick = originalOnClick;
-                        // 关闭对话框
-                        confirmDialog.style.display = 'none';
                     }
                 };
 
@@ -3325,14 +3400,33 @@
                 notesList.innerHTML = notes.map(note => {
                     // 添加HTML转义函数
                     const escapeHtml = (text) => {
+                        if (!text) return '';
                         const div = document.createElement('div');
                         div.textContent = text;
                         return div.innerHTML;
+                    };
+
+                    // 添加JavaScript字符串转义函数
+                    const escapeJsString = (text) => {
+                        if (!text) return '';
+                        return text
+                            .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // 移除控制字符
+                            .replace(/[\\'"]/g, '\\$&') // 转义引号和反斜杠
+                            .replace(/\n/g, '\\n') // 转义换行符
+                            .replace(/\r/g, '\\r') // 转义回车符
+                            .replace(/\t/g, '\\t') // 转义制表符
+                            .replace(/\f/g, '\\f') // 转义换页符
+                            .replace(/\v/g, '\\v') // 转义垂直制表符
+                            .replace(/\b/g, '\\b'); // 转义退格符
                     };
                     
                     // 根据内容长度判断类名
                     const contentLength = note.content.length;
                     const cardClass = contentLength > 200 ? 'note-card long-content' : 'note-card short-content';
+                    
+                    const escapedTitle = escapeJsString(note.title);
+                    const escapedContent = escapeJsString(note.content);
+                    const escapedTags = escapeJsString(note.tags || '');
                     
                     return `
                     <div class="${cardClass}" data-note-id="${note.id}">
@@ -3340,7 +3434,7 @@
                         <div class="note-content">${escapeHtml(note.content)}</div>
                         ${note.tags ? `<div class="note-tags">标签: ${escapeHtml(note.tags)}</div>` : ''}
                         <div class="note-actions">
-                            <button class="edit-note" onclick="editNoteDialog(${note.id}, '${escapeHtml(note.title).replace(/'/g, "\\'")}', '${escapeHtml(note.content).replace(/'/g, "\\'")}', '${escapeHtml(note.tags || '').replace(/'/g, "\\'")}')">编辑</button>
+                            <button class="edit-note" onclick="editNoteDialog(${note.id}, '${escapedTitle}', '${escapedContent}', '${escapedTags}')">编辑</button>
                             <button class="delete-note" onclick="noteManager.deleteNote(${note.id})">删除</button>
                         </div>
                     </div>
@@ -3586,20 +3680,27 @@
             const overlay = document.createElement('div');
             overlay.className = 'edit-dialog-overlay';
             
+            // 解码HTML实体
+            const decodeHtml = (html) => {
+                const txt = document.createElement('textarea');
+                txt.innerHTML = html;
+                return txt.value;
+            };
+            
             overlay.innerHTML = `
                 <div class="edit-dialog">
                     <div class="edit-dialog-title">编辑笔记</div>
                     <div class="edit-form-group">
                         <label for="editNoteTitle">笔记标题</label>
-                        <input type="text" id="editNoteTitle" value="${title}">
+                        <input type="text" id="editNoteTitle" value="${decodeHtml(title)}">
                     </div>
                     <div class="edit-form-group">
                         <label for="editNoteContent">笔记内容</label>
-                        <textarea id="editNoteContent" style="min-height: 150px;">${content}</textarea>
+                        <textarea id="editNoteContent" style="min-height: 150px; width: 100%;">${decodeHtml(content)}</textarea>
                     </div>
                     <div class="edit-form-group">
                         <label for="editNoteTags">标签</label>
-                        <input type="text" id="editNoteTags" value="${tags}" placeholder="用逗号分隔多个标签">
+                        <input type="text" id="editNoteTags" value="${decodeHtml(tags)}" placeholder="用逗号分隔多个标签">
                     </div>
                     <div class="edit-dialog-buttons">
                         <button class="edit-dialog-button edit-dialog-cancel" onclick="this.closest('.edit-dialog-overlay').remove()">取消</button>
@@ -3641,6 +3742,31 @@
 
                 // 重新加载笔记列表
                 await noteManager.loadNotes();
+                
+                // 更新左侧导航栏的笔记列表
+                const notesLinks = document.querySelector('.category-nav-item .category-nav-links');
+                if (notesLinks) {
+                    const response = await fetch(`${baseUrl}/api/notes`);
+                    if (!response.ok) throw new Error('获取笔记列表失败');
+                    
+                    const notes = await response.json();
+                    const escapeHtml = (text) => {
+                        if (!text) return '';
+                        return text
+                            .replace(/&/g, '&amp;')
+                            .replace(/</g, '&lt;')
+                            .replace(/>/g, '&gt;')
+                            .replace(/"/g, '&quot;')
+                            .replace(/'/g, '&#039;');
+                    };
+                    
+                    notesLinks.innerHTML = notes.map(note => `
+                        <a href="#" class="category-nav-link" onclick="showNoteDetail(${note.id}); return false;" title="${escapeHtml(note.content)}">
+                            ${escapeHtml(note.title)}
+                        </a>
+                    `).join('');
+                }
+
                 showToast('笔记更新成功！');
             } catch (error) {
                 console.error('更新笔记失败:', error);
@@ -3881,14 +4007,21 @@
         // 在显示链接的HTML中，修改img标签的src属性处理
         function createLinkCard(link) {
             // 处理favicon URL
+            console.log('[createLinkCard] 开始处理链接:', link.title);
+            console.log('[createLinkCard] 原始favicon:', link.favicon);
+            
             let faviconUrl = defaultFaviconUrl;
             if (link.favicon) {
                 if (link.favicon.startsWith('http')) {
                     faviconUrl = link.favicon;
+                    console.log('[createLinkCard] 使用完整URL:', faviconUrl);
                 } else {
                     // 如果是相对路径，添加baseUrl
                     faviconUrl = baseUrl + link.favicon;
+                    console.log('[createLinkCard] 添加baseUrl后:', faviconUrl);
                 }
+            } else {
+                console.log('[createLinkCard] 使用默认favicon');
             }
             
             return `
@@ -3908,12 +4041,25 @@
             `;
         }
 
-        // 处理favicon URL的辅助函数
-        function getFaviconUrl(favicon) {
-            if (!favicon) return defaultFaviconUrl;
-            if (favicon.startsWith('http')) return favicon;
-            // 如果是相对路径，添加baseUrl
-            return baseUrl + favicon;
+        // 更新链接的favicon
+        async function updateLinkFavicon(linkId) {
+            try {
+                console.log('[updateLinkFavicon] 开始更新链接favicon, linkId:', linkId);
+                const response = await fetch(`${baseUrl}/api/auto-update-favicon/${linkId}`, {
+                    method: 'POST'
+                });
+
+                if (!response.ok) {
+                    throw new Error('更新favicon失败');
+                }
+
+                const data = await response.json();
+                console.log('[updateLinkFavicon] 更新成功，新的favicon:', data.iconUrl);
+                return data.iconUrl;
+            } catch (error) {
+                console.error('[updateLinkFavicon] 更新失败:', error);
+                return null;
+            }
         }
 
         function displayLinks(links) {
@@ -3984,6 +4130,108 @@
             console.log('初始化分类拖拽排序');
             initializeCategorySort();
         }
+
+        // 自动更新链接的favicon
+        async function updateLinkFavicon(linkId) {
+            try {
+                const response = await fetch(`${baseUrl}/api/auto-update-favicon/${linkId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('自动更新图标失败');
+                }
+
+                const result = await response.json();
+                await loadLinks('all');
+                showToast('网站图标更新成功！');
+            } catch (error) {
+                console.error('自动更新图标失败:', error);
+                showToast('自动更新图标失败: ' + error.message, 'error');
+            }
+        }
+
+        // 笔记排序方向
+        let isNoteDescSort = true;
+
+        // 切换笔记排序
+        async function toggleNoteSort() {
+            console.log('toggleNoteSort 被调用');
+            console.log('排序前状态:', isNoteDescSort);
+            
+            isNoteDescSort = !isNoteDescSort;
+            console.log('切换后的排序状态:', isNoteDescSort);
+            
+            const sortButton = document.querySelector('#notesContainer .sort-button');
+            if (sortButton) {
+                console.log('更新排序按钮样式');
+                sortButton.classList.toggle('desc', isNoteDescSort);
+                // 更新排序图标方向
+                const sortIcon = sortButton.querySelector('.sort-icon');
+                if (sortIcon) {
+                    console.log('更新排序图标方向');
+                    sortIcon.style.transform = isNoteDescSort ? 'rotate(180deg)' : 'rotate(0deg)';
+                }
+            }
+            
+            await noteManager.loadNotes();
+            showToast(`笔记已${isNoteDescSort ? '降序' : '升序'}排列`);
+        }
+
+        // 修改笔记管理器
+        Object.assign(noteManager, {
+            async loadNotes() {
+                try {
+                    const response = await fetch(`${baseUrl}/api/notes?sort=${isNoteDescSort ? 'desc' : 'asc'}`);
+                    if (!response.ok) {
+                        throw new Error('获取笔记失败');
+                    }
+
+                    const notes = await response.json();
+                    this.renderNotes(notes);
+
+                    // 初始化拖拽排序
+                    const notesList = document.getElementById('notesList');
+                    if (notesList) {
+                        new Sortable(notesList, {
+                            animation: 150,
+                            ghostClass: 'note-card-ghost',
+                            onEnd: async function(evt) {
+                                const noteIds = Array.from(notesList.children).map(
+                                    card => card.getAttribute('data-note-id')
+                                );
+                                
+                                try {
+                                    const response = await fetch(`${baseUrl}/api/notes/reorder`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({ noteIds })
+                                    });
+                                    
+                                    if (!response.ok) {
+                                        throw new Error('更新笔记顺序失败');
+                                    }
+                                    
+                                    showToast('笔记顺序更新成功');
+                                } catch (error) {
+                                    console.error('更新笔记顺序失败:', error);
+                                    showToast('更新笔记顺序失败', 'error');
+                                }
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.error('加载笔记失败:', error);
+                    utils.showToast('加载笔记失败', 'error');
+                }
+            }
+        });
     </script>
 </body>
 </html> 

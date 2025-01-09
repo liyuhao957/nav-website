@@ -154,6 +154,21 @@ const app = express();
 // 启用CORS
 app.use(cors());
 
+// 添加缓存控制中间件
+app.use((req, res, next) => {
+    // API 请求禁用缓存
+    if (req.path.startsWith('/api/')) {
+        res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
+    }
+    // 静态资源（如图标）使用短期缓存
+    else if (req.path.startsWith('/icons/')) {
+        res.set('Cache-Control', 'public, max-age=3600, must-revalidate'); // 1小时缓存
+    }
+    next();
+});
+
 // 解析JSON请求体
 app.use(express.json());
 
@@ -289,37 +304,67 @@ app.get('/api/all-links', async (req, res) => {
 app.post('/api/links', async (req, res) => {
     try {
         const { category, title, url, description } = req.body;
+        console.log('\n[添加链接] 开始处理请求:', { category, title, url, description });
         
         if (!category || !title || !url) {
+            console.log('[添加链接] 参数验证失败：缺少必要参数');
             return res.status(400).json({ error: '分类、标题和URL为必填项' });
         }
 
         let formattedUrl = url;
         if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
             formattedUrl = 'https://' + formattedUrl;
+            console.log('[添加链接] 格式化URL:', formattedUrl);
         }
 
         try {
             new URL(formattedUrl);
         } catch (error) {
+            console.log('[添加链接] 无效的URL格式:', error.message);
             return res.status(400).json({ error: '无效的URL格式' });
         }
         
-        const favicon = await getFavicon(formattedUrl);
+        // 生成链接ID
         const id = Date.now().toString();
+        console.log('[添加链接] 生成的链接ID:', id);
         
+        console.log('[添加链接] 开始获取favicon...');
+        // 先添加链接，使用默认favicon
         await executeQuery(
             'INSERT INTO links (id, category, title, url, description, favicon) VALUES (?, ?, ?, ?, ?, ?)',
-            [id, category, title, formattedUrl, description, favicon]
+            [id, category, title, formattedUrl, description, '/favicon.svg']
         );
         
+        // 异步获取favicon，不阻塞响应
+        (async () => {
+            try {
+                console.log('[添加链接] 开始异步获取favicon...');
+                const iconUrl = await getFavicon(formattedUrl);
+                if (iconUrl) {
+                    console.log('[添加链接] 获取到favicon，更新数据库:', iconUrl);
+                    await executeQuery(
+                        'UPDATE links SET favicon = ? WHERE id = ?',
+                        [iconUrl, id]
+                    );
+                    console.log('[添加链接] Favicon更新成功');
+                } else {
+                    console.log('[添加链接] 未获取到favicon，保持默认图标');
+                }
+            } catch (error) {
+                console.error('[添加链接] 获取favicon失败:', error);
+            }
+        })();
+        
+        // 获取新添加的链接信息
         const newLink = await executeQuery(
             'SELECT * FROM links WHERE id = ?',
             [id]
         );
         
+        console.log('[添加链接] 链接添加成功:', newLink[0]);
         res.json({ message: '链接添加成功', link: newLink[0] });
     } catch (error) {
+        console.error('[添加链接] 添加链接失败:', error);
         res.status(500).json({ error: '添加链接失败' });
     }
 });
@@ -497,34 +542,34 @@ app.get('/api/export', async (req, res) => {
     }
 });
 
-// 检查链接有效性
-app.post('/api/check-links', async (req, res) => {
-    try {
-        // 启动异步任务检查链接
-        checkAllLinks();
-        res.json({ message: '链接检查已开始' });
-    } catch (error) {
-        res.status(500).json({ error: '检查链接失败' });
-    }
-});
-
 // 辅助函数：获取网站favicon
 async function getFavicon(url) {
     try {
+        console.log('\n[getFavicon] 开始获取favicon, URL:', url);
         // 验证URL格式
         if (!url.startsWith('http://') && !url.startsWith('https://')) {
             url = 'https://' + url;
+            console.log('[getFavicon] 添加https前缀后的URL:', url);
         }
 
         try {
             new URL(url); // 验证URL是否有效
         } catch (error) {
-            // 静默处理无效URL
+            console.log('[getFavicon] 无效的URL格式:', error.message);
             return null;
         }
 
         try {
-            const { data } = await axios.get(url);
+            const requestConfig = {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                },
+                timeout: 5000
+            };
+
+            console.log('[getFavicon] 开始获取页面内容...');
+            const { data } = await axios.get(url, requestConfig);
+            console.log('[getFavicon] 页面内容获取成功，开始解析...');
             const $ = cheerio.load(data);
             
             // 尝试从link标签获取favicon
@@ -532,32 +577,59 @@ async function getFavicon(url) {
                          $('link[rel="shortcut icon"]').attr('href') ||
                          $('link[rel="apple-touch-icon"]').attr('href');
             
+            console.log('[getFavicon] 从页面解析到的favicon:', favicon);
+            
             // 如果没有找到favicon，使用默认的favicon路径
             if (!favicon) {
                 const urlObj = new URL(url);
                 favicon = `${urlObj.protocol}//${urlObj.hostname}/favicon.ico`;
+                console.log('[getFavicon] 未找到favicon，使用默认路径:', favicon);
             }
             
             // 如果favicon是相对路径，转换为绝对路径
             if (favicon && !favicon.startsWith('http')) {
                 const urlObj = new URL(url);
+                const oldFavicon = favicon;
                 favicon = new URL(favicon, urlObj.origin).href;
+                console.log('[getFavicon] 将相对路径转换为绝对路径:', oldFavicon, '->', favicon);
             }
             
             // 验证favicon URL是否可访问
             try {
-                await axios.head(favicon);
+                console.log('[getFavicon] 开始验证favicon可访问性:', favicon);
+                // 检查是否是华为的链接
+                const isHuaweiLink = favicon.includes('developer.huawei.com');
+                console.log('[getFavicon] 是否是华为链接:', isHuaweiLink);
+
+                if (isHuaweiLink) {
+                    console.log('[getFavicon] 使用GET请求验证华为favicon');
+                    const response = await axios.get(favicon, requestConfig);
+                    console.log('[getFavicon] 华为favicon验证结果:', response.status);
+                } else {
+                    console.log('[getFavicon] 使用HEAD请求验证favicon');
+                    const response = await axios.head(favicon);
+                    console.log('[getFavicon] Favicon验证结果:', response.status);
+                }
+                console.log('[getFavicon] Favicon验证成功，返回URL:', favicon);
                 return favicon;
             } catch (error) {
-                // 静默处理不可访问的favicon
+                console.error('[getFavicon] Favicon验证失败:', error.message);
+                if (error.response) {
+                    console.error('[getFavicon] 响应状态码:', error.response.status);
+                    console.error('[getFavicon] 响应头:', JSON.stringify(error.response.headers, null, 2));
+                }
                 return null;
             }
         } catch (error) {
-            // 静默处理页面内容获取失败
+            console.error('[getFavicon] 获取页面内容失败:', error.message);
+            if (error.response) {
+                console.error('[getFavicon] 响应状态码:', error.response.status);
+                console.error('[getFavicon] 响应头:', JSON.stringify(error.response.headers, null, 2));
+            }
             return null;
         }
     } catch (error) {
-        // 静默处理所有其他错误
+        console.error('[getFavicon] 获取favicon过程中发生错误:', error.message);
         return null;
     }
 }
@@ -589,17 +661,56 @@ async function getWebsitePreview(url) {
 async function checkAllLinks() {
     const batchSize = 5;
     try {
-        const links = await executeQuery('SELECT id, url FROM links');
+        console.log('开始检查所有链接...');
+        const links = await executeQuery('SELECT id, title, url FROM links');
+        console.log(`总共需要检查 ${links.length} 个链接`);
+
         for (let i = 0; i < links.length; i += batchSize) {
             const batch = links.slice(i, i + batchSize);
+            console.log(`正在检查第 ${i + 1} 到 ${Math.min(i + batchSize, links.length)} 个链接...`);
+
             await Promise.all(batch.map(async (link) => {
                 try {
-                    await axios.head(link.url);
+                    console.log(`检查链接: ${link.url} (${link.title})`);
+
+                    // 验证URL格式
+                    try {
+                        new URL(link.url);
+                    } catch (error) {
+                        console.error(`无效的URL格式: ${link.url}`);
+                        await executeQuery(
+                            'UPDATE links SET isValid = false WHERE id = ?',
+                            [link.id]
+                        );
+                        return;
+                    }
+
+                    // 检查是否是华为的链接
+                    const isHuaweiLink = link.url.includes('developer.huawei.com');
+                    const requestConfig = {
+                        validateStatus: null, // 不抛出HTTP错误
+                        timeout: 5000, // 5秒超时
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                        }
+                    };
+
+                    // 对华为链接使用GET请求，其他链接使用HEAD请求
+                    const response = await (isHuaweiLink ? 
+                        axios.get(link.url, requestConfig) : 
+                        axios.head(link.url, requestConfig));
+                    
+                    // 只有2xx状态码才认为是有效的
+                    const isValid = response.status >= 200 && response.status < 300;
+                    console.log(`链接 ${link.url} 状态码: ${response.status}, 有效性: ${isValid}`);
+                    
                     await executeQuery(
-                        'UPDATE links SET isValid = true WHERE id = ?',
-                        [link.id]
+                        'UPDATE links SET isValid = ? WHERE id = ?',
+                        [isValid, link.id]
                     );
                 } catch (error) {
+                    // 任何错误（网络错误、超时等）都标记为无效
+                    console.error(`检查链接 ${link.url} 失败:`, error.message);
                     await executeQuery(
                         'UPDATE links SET isValid = false WHERE id = ?',
                         [link.id]
@@ -609,10 +720,34 @@ async function checkAllLinks() {
             // 每个批次处理完后等待一小段时间
             await new Promise(resolve => setTimeout(resolve, 1000));
         }
+        console.log('所有链接检查完成');
     } catch (error) {
         console.error('检查链接失败:', error);
+        throw error;
     }
 }
+
+// 检查链接有效性
+app.post('/api/check-links', async (req, res) => {
+    try {
+        console.log('收到检查链接请求');
+        await checkAllLinks();
+        console.log('获取检查结果...');
+        // 获取检查结果，包括标题信息
+        const results = await executeQuery('SELECT id, title, url, isValid FROM links');
+        console.log(`检查完成，共 ${results.length} 个链接`);
+        console.log('有效链接数:', results.filter(r => r.isValid).length);
+        console.log('无效链接数:', results.filter(r => !r.isValid).length);
+        
+        res.json({ 
+            message: '链接检查完成',
+            results: results
+        });
+    } catch (error) {
+        console.error('检查链接失败:', error);
+        res.status(500).json({ error: '检查链接失败' });
+    }
+});
 
 // 定时任务：每天凌晨2点检查链接有效性
 let isCheckingLinks = false;
@@ -854,9 +989,36 @@ async function initializeNotesTable() {
                 content TEXT NOT NULL,
                 tags VARCHAR(255),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                sort_order INT DEFAULT 0
             )
         `);
+
+        // 检查sort_order字段是否存在
+        const [columns] = await pool.query(`
+            SELECT COLUMN_NAME 
+            FROM INFORMATION_SCHEMA.COLUMNS 
+            WHERE TABLE_NAME = 'notes' 
+            AND COLUMN_NAME = 'sort_order'
+        `);
+
+        // 如果字段不存在，添加它
+        if (columns.length === 0) {
+            await pool.query(`
+                ALTER TABLE notes 
+                ADD COLUMN sort_order INT DEFAULT 0
+            `);
+
+            // 根据现有笔记的ID顺序初始化sort_order
+            const [notes] = await pool.query('SELECT id FROM notes ORDER BY id DESC');
+            for (let i = 0; i < notes.length; i++) {
+                await pool.query(
+                    'UPDATE notes SET sort_order = ? WHERE id = ?',
+                    [notes.length - i, notes[i].id]
+                );
+            }
+        }
+
         console.log('Notes表初始化完成');
     } catch (error) {
         console.error('初始化notes表失败:', error);
@@ -877,14 +1039,83 @@ testConnection().then(() => {
     });
 });
 
-// 获取所有笔记
+// 获取所有笔记（带排序）
 app.get('/api/notes', async (req, res) => {
     try {
-        const rows = await executeQuery('SELECT * FROM notes ORDER BY created_at DESC');
+        const sort = req.query.sort || 'desc'; // 默认按时间降序
+        const orderBy = req.query.orderBy || 'created_at'; // 可以是 'created_at' 或 'sort_order'
+        
+        let query;
+        if (orderBy === 'sort_order') {
+            query = `SELECT * FROM notes ORDER BY sort_order ${sort === 'desc' ? 'DESC' : 'ASC'}`;
+        } else {
+            query = `SELECT * FROM notes ORDER BY created_at ${sort === 'desc' ? 'DESC' : 'ASC'}`;
+        }
+        
+        const rows = await executeQuery(query);
         res.json(rows);
     } catch (error) {
         console.error('获取笔记失败:', error);
         res.status(500).json({ error: '获取笔记失败' });
+    }
+});
+
+// 导出笔记
+app.get('/api/notes/export', async (req, res) => {
+    try {
+        const rows = await executeQuery('SELECT * FROM notes ORDER BY sort_order DESC');
+        res.json(rows);
+    } catch (error) {
+        console.error('导出笔记失败:', error);
+        res.status(500).json({ error: '导出笔记失败' });
+    }
+});
+
+// 导入笔记
+app.post('/api/notes/import', async (req, res) => {
+    let connection;
+    try {
+        const { notes } = req.body;
+        
+        if (!Array.isArray(notes)) {
+            return res.status(400).json({ error: '无效的笔记数据格式' });
+        }
+
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        // 获取当前最大的排序值
+        const [maxOrder] = await connection.query(
+            'SELECT COALESCE(MAX(sort_order), 0) as maxOrder FROM notes'
+        );
+        let currentOrder = maxOrder[0].maxOrder || 0;
+
+        // 处理每个笔记
+        for (const note of notes) {
+            // 转义特殊字符
+            const escapedTitle = note.title.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
+            const escapedContent = note.content.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
+            const escapedTags = note.tags ? note.tags.replace(/[\u0000-\u001F\u007F-\u009F]/g, '') : null;
+
+            currentOrder += 1;
+            await connection.query(
+                'INSERT INTO notes (title, content, tags, sort_order) VALUES (?, ?, ?, ?)',
+                [escapedTitle, escapedContent, escapedTags, currentOrder]
+            );
+        }
+
+        await connection.commit();
+        res.json({ message: '笔记导入成功', count: notes.length });
+    } catch (error) {
+        if (connection) {
+            await connection.rollback();
+        }
+        console.error('导入笔记失败:', error);
+        res.status(500).json({ error: '导入笔记失败' });
+    } finally {
+        if (connection) {
+            connection.release();
+        }
     }
 });
 
@@ -1047,104 +1278,147 @@ app.put('/api/links/:id/favicon', async (req, res) => {
     }
 });
 
-// 自动下载并保存华为图标
-async function downloadHuaweiIcon() {
+// 自动下载并保存网站图标
+async function downloadSiteIcon(linkId) {
     try {
-        // 1. 先获取华为引擎说明的URL
+        console.log('\n[downloadSiteIcon] 开始处理, linkId:', linkId);
+        // 1. 先获取链接信息
         const [links] = await pool.query(
-            'SELECT url FROM links WHERE title = ?',
-            ['华为引擎说明']
+            'SELECT id, title, url FROM links WHERE id = ?',
+            [linkId]
         );
 
         if (links.length === 0) {
-            throw new Error('未找到华为引擎说明链接');
+            throw new Error('未找到指定链接');
         }
 
         const siteUrl = links[0].url;
-        console.log('华为引擎说明URL:', siteUrl);
+        console.log('[downloadSiteIcon] 网站URL:', siteUrl);
         
-        // 2. 获取页面内容
-        console.log('正在获取页面内容...');
-        const { data } = await axios.get(siteUrl);
-        const $ = cheerio.load(data);
+        // 2. 获取favicon
+        console.log('[downloadSiteIcon] 开始获取favicon...');
+        const iconUrl = await getFavicon(siteUrl);
         
-        // 3. 尝试获取favicon链接
-        let iconUrl = $('link[rel="icon"]').attr('href') ||
-                     $('link[rel="shortcut icon"]').attr('href') ||
-                     $('link[rel="apple-touch-icon"]').attr('href');
-        
-        console.log('从页面解析到的favicon链接:', iconUrl);
-        
-        // 如果没有找到favicon，使用默认路径
         if (!iconUrl) {
-            const urlObj = new URL(siteUrl);
-            iconUrl = `${urlObj.protocol}//${urlObj.hostname}/favicon.ico`;
-            console.log('使用默认favicon路径:', iconUrl);
+            console.log('[downloadSiteIcon] 未获取到favicon');
+            return null;
         }
         
-        // 如果是相对路径，转换为绝对路径
-        if (iconUrl && !iconUrl.startsWith('http')) {
-            const urlObj = new URL(siteUrl);
-            iconUrl = new URL(iconUrl, urlObj.origin).href;
-            console.log('转换为绝对路径后的favicon:', iconUrl);
-        }
-
-        // 4. 下载图标
-        console.log('开始下载图标...');
-        const iconResponse = await axios.get(iconUrl, { responseType: 'arraybuffer' });
-        const iconPath = path.join(__dirname, '../frontend/icons/huawei-logo.ico');
-        
-        console.log('图标将保存到:', iconPath);
-        
-        // 确保目录存在
-        const dir = path.dirname(iconPath);
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
-            console.log('创建目录:', dir);
-        }
-        
-        // 保存图标
-        fs.writeFileSync(iconPath, iconResponse.data);
-        console.log('图标保存成功');
-        
-        return `/icons/huawei-logo.ico`;
+        console.log('[downloadSiteIcon] 获取到favicon:', iconUrl);
+        return iconUrl;
     } catch (error) {
-        console.error('下载华为图标失败:', error);
+        console.error('[downloadSiteIcon] 下载网站图标失败:', error);
         throw error;
     }
 }
 
-// 自动更新华为引擎说明的favicon
-app.post('/api/auto-update-huawei-favicon', async (req, res) => {
+// 自动更新网站的favicon
+app.post('/api/auto-update-favicon/:linkId', async (req, res) => {
     try {
-        // 1. 查找华为引擎说明的链接ID
+        const linkId = req.params.linkId;
+        console.log('\n[updateFavicon] 开始更新favicon, linkId:', linkId);
+
+        // 1. 检查链接是否存在
         const [links] = await pool.query(
-            'SELECT id FROM links WHERE title = ?',
-            ['华为引擎说明']
+            'SELECT id, title, url FROM links WHERE id = ?',
+            [linkId]
         );
 
         if (links.length === 0) {
-            return res.status(404).json({ error: '未找到华为引擎说明链接' });
+            console.log('[updateFavicon] 未找到指定链接');
+            return res.status(404).json({ error: '未找到指定链接' });
         }
 
-        const linkId = links[0].id;
-
         // 2. 下载并保存图标
-        const iconUrl = await downloadHuaweiIcon();
+        console.log('[updateFavicon] 开始下载图标...');
+        const iconUrl = await downloadSiteIcon(linkId);
+
+        if (!iconUrl) {
+            console.log('[updateFavicon] 未能获取到新的favicon');
+            return res.status(400).json({ error: '未能获取到新的favicon' });
+        }
 
         // 3. 更新数据库中的favicon
+        console.log('[updateFavicon] 更新数据库中的favicon:', iconUrl);
         await pool.query(
             'UPDATE links SET favicon = ? WHERE id = ?',
             [iconUrl, linkId]
         );
 
+        console.log('[updateFavicon] 更新成功');
         res.json({ 
-            message: '华为引擎说明favicon更新成功',
+            message: 'favicon更新成功',
             iconUrl: iconUrl,
             linkId: linkId
         });
     } catch (error) {
-        console.error('自动更新华为图标失败:', error);
-        res.status(500).json({ error: '自动更新华为图标失败' });
+        console.error('[updateFavicon] 自动更新图标失败:', error);
+        res.status(500).json({ error: '自动更新图标失败' });
+    }
+});
+
+// 更新笔记排序顺序
+app.post('/api/notes/reorder', async (req, res) => {
+    const { noteIds } = req.body;
+    
+    if (!Array.isArray(noteIds) || noteIds.length === 0) {
+        return res.status(400).json({ error: '无效的笔记ID数组' });
+    }
+
+    try {
+        // 开始事务
+        await pool.query('START TRANSACTION');
+
+        // 更新每个笔记的排序
+        for (let i = 0; i < noteIds.length; i++) {
+            const noteId = noteIds[i];
+            const order = noteIds.length - i; // 倒序，最后一个是1
+            await pool.query(
+                'UPDATE notes SET sort_order = ? WHERE id = ?',
+                [order, noteId]
+            );
+        }
+
+        // 提交事务
+        await pool.query('COMMIT');
+        
+        res.json({ message: '笔记顺序更新成功' });
+    } catch (error) {
+        // 如果出错，回滚事务
+        await pool.query('ROLLBACK');
+        console.error('更新笔记顺序失败:', error);
+        res.status(500).json({ error: '更新笔记顺序失败' });
+    }
+});
+
+// 获取所有笔记（带排序）
+app.get('/api/notes', async (req, res) => {
+    try {
+        const sort = req.query.sort || 'desc'; // 默认按时间降序
+        const orderBy = req.query.orderBy || 'created_at'; // 可以是 'created_at' 或 'sort_order'
+        
+        let query;
+        if (orderBy === 'sort_order') {
+            query = `SELECT * FROM notes ORDER BY sort_order ${sort === 'desc' ? 'DESC' : 'ASC'}`;
+        } else {
+            query = `SELECT * FROM notes ORDER BY created_at ${sort === 'desc' ? 'DESC' : 'ASC'}`;
+        }
+        
+        const rows = await executeQuery(query);
+        res.json(rows);
+    } catch (error) {
+        console.error('获取笔记失败:', error);
+        res.status(500).json({ error: '获取笔记失败' });
+    }
+});
+
+// 导出笔记
+app.get('/api/notes/export', async (req, res) => {
+    try {
+        const rows = await executeQuery('SELECT * FROM notes ORDER BY sort_order DESC');
+        res.json(rows);
+    } catch (error) {
+        console.error('导出笔记失败:', error);
+        res.status(500).json({ error: '导出笔记失败' });
     }
 }); 
