@@ -2046,11 +2046,15 @@
 
             if (category === 'all') {
                 console.log('选择了"显示所有分类"');
-                // 点击"显示所有分类"
+                // 直接加载所有链接
+                loadLinks('all');
+                
+                // 更新侧边栏导航的选中状态
+                const categoryHeaders = document.querySelectorAll('.category-nav-header');
+                categoryHeaders.forEach(header => header.classList.remove('active'));
                 const allCategoriesHeader = document.querySelector('#categoryNav li:first-child .category-nav-header');
                 if (allCategoriesHeader) {
-                    console.log('触发"全部分类"点击事件');
-                    allCategoriesHeader.click();
+                    allCategoriesHeader.classList.add('active');
                 }
             } else {
                 console.log('选择了特定分类:', category);
@@ -3143,6 +3147,40 @@
                 });
             }
         }
+
+        // 处理分类项点击
+        function handleCategoryItemClick(event) {
+            event.stopPropagation(); // 阻止事件冒泡
+            const item = event.target;
+            if (!item.classList.contains('dropdown-item')) return;
+            
+            const value = item.getAttribute('data-value');
+            const text = item.textContent.trim();
+            
+            // 更新选中状态
+            const dropdownItems = document.querySelectorAll('.dropdown-item');
+            dropdownItems.forEach(di => di.classList.remove('selected'));
+            item.classList.add('selected');
+            
+            // 更新显示文本
+            const selectedOption = item.closest('.custom-select').querySelector('.selected-option');
+            selectedOption.textContent = text;
+            
+            // 关闭下拉框
+            const customSelect = item.closest('.custom-select');
+            customSelect.classList.remove('open');
+            
+            // 触发分类过滤
+            handleCategoryFilterChange(value);
+        }
+
+        // 为所有dropdown-item添加点击事件
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropdownMenu = document.querySelector('.dropdown-menu');
+            if (dropdownMenu) {
+                dropdownMenu.addEventListener('click', handleCategoryItemClick);
+            }
+        });
 
         // 导出模板
         function exportTemplate() {
