@@ -2143,7 +2143,7 @@
                 
                 // 更新分类过滤器
                 console.log('更新分类过滤器');
-                const dropdownMenu = document.querySelector('.dropdown-menu');
+                const dropdownMenu = document.querySelector('.category-filter .dropdown-menu');
                 dropdownMenu.innerHTML = `
                     <div class="dropdown-item ${selectedCategory === 'all' ? 'selected' : ''}" data-value="all">
                         显示所有分类
@@ -2154,6 +2154,17 @@
                         </div>
                     `).join('')}
                 `;
+
+                // 更新添加链接表单的分类选择器
+                const addLinkDropdownMenu = document.querySelector('.link-form .dropdown-menu');
+                if (addLinkDropdownMenu) {
+                    console.log('更新添加链接表单的分类选择器');
+                    addLinkDropdownMenu.innerHTML = categories.map(category => `
+                        <div class="dropdown-item" data-value="${category}">
+                            ${category}
+                        </div>
+                    `).join('');
+                }
 
                 // 更新侧边栏导航
                 const categoryNav = document.getElementById('categoryNav');
@@ -3134,15 +3145,19 @@
 
         // 添加自定义下拉框相关函数
         function toggleDropdown(event) {
+            console.log('toggleDropdown 被触发', event.currentTarget);
             const select = event.currentTarget;
             select.classList.toggle('open');
             
             // 点击外部关闭下拉框
             if (select.classList.contains('open')) {
+                console.log('下拉框被打开');
                 document.addEventListener('click', function closeDropdown(e) {
+                    console.log('点击事件触发，检查是否需要关闭下拉框', e.target);
                     if (!select.contains(e.target)) {
                         select.classList.remove('open');
                         document.removeEventListener('click', closeDropdown);
+                        console.log('下拉框被关闭');
                     }
                 });
             }
@@ -3150,36 +3165,69 @@
 
         // 处理分类项点击
         function handleCategoryItemClick(event) {
+            console.log('handleCategoryItemClick 被触发');
+            console.log('点击的目标元素:', event.target);
+            
             event.stopPropagation(); // 阻止事件冒泡
-            const item = event.target;
-            if (!item.classList.contains('dropdown-item')) return;
+            const item = event.target.closest('.dropdown-item');
+            console.log('找到的 dropdown-item:', item);
+            
+            if (!item) {
+                console.log('未找到有效的 dropdown-item');
+                return;
+            }
             
             const value = item.getAttribute('data-value');
             const text = item.textContent.trim();
+            console.log('选中的值:', value);
+            console.log('选中的文本:', text);
             
             // 更新选中状态
-            const dropdownItems = document.querySelectorAll('.dropdown-item');
+            const customSelect = item.closest('.custom-select');
+            console.log('找到的 custom-select:', customSelect);
+            
+            const dropdownItems = customSelect.querySelectorAll('.dropdown-item');
             dropdownItems.forEach(di => di.classList.remove('selected'));
             item.classList.add('selected');
             
             // 更新显示文本
-            const selectedOption = item.closest('.custom-select').querySelector('.selected-option');
+            const selectedOption = customSelect.querySelector('.selected-option');
+            console.log('找到的 selected-option:', selectedOption);
             selectedOption.textContent = text;
+            selectedOption.setAttribute('data-value', value);
             
             // 关闭下拉框
-            const customSelect = item.closest('.custom-select');
             customSelect.classList.remove('open');
             
-            // 触发分类过滤
-            handleCategoryFilterChange(value);
+            // 只有在分类过滤器中才触发过滤
+            if (customSelect.closest('.category-filter')) {
+                console.log('触发分类过滤');
+                handleCategoryFilterChange(value);
+            } else {
+                console.log('不触发分类过滤，这是添加链接的选择框');
+            }
         }
 
         // 为所有dropdown-item添加点击事件
         document.addEventListener('DOMContentLoaded', function() {
-            const dropdownMenu = document.querySelector('.dropdown-menu');
-            if (dropdownMenu) {
-                dropdownMenu.addEventListener('click', handleCategoryItemClick);
-            }
+            console.log('DOMContentLoaded - 开始设置事件监听');
+            
+            // 为所有的dropdown-menu添加点击事件委托
+            const dropdownMenus = document.querySelectorAll('.dropdown-menu');
+            dropdownMenus.forEach(menu => {
+                console.log('为下拉菜单添加点击事件:', menu);
+                menu.addEventListener('click', function(event) {
+                    console.log('dropdown-menu click 事件触发');
+                    const item = event.target.closest('.dropdown-item');
+                    if (!item) {
+                        console.log('点击的不是下拉选项');
+                        return;
+                    }
+                    handleCategoryItemClick(event);
+                });
+            });
+            
+            console.log('事件监听器设置完成');
         });
 
         // 导出模板
