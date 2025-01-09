@@ -1207,39 +1207,75 @@
         .notes-list {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 25px;
-            margin-top: 20px;
-            padding: 10px;
-            align-items: start;  /* 让卡片从顶部对齐 */
+            gap: 20px;
+            padding: 20px 0;
         }
 
-        .note-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            width: 100%;
-            height: fit-content;  /* 根据内容自适应高度 */
-            min-height: 120px;    /* 设置一个较小的最小高度 */
-            display: flex;
-            flex-direction: column;
+        /* 笔记项样式 */
+        .note-item {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
-            position: relative;
+            height: fit-content;
         }
 
-        .note-card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        .note-item:hover {
             transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-        .note-card h3 {
-            margin: 0 0 15px 0;
-            color: #2c3e50;
-            font-size: 18px;
-            font-weight: 600;
-            line-height: 1.4;
-            border-bottom: 2px solid #f0f0f0;
-            padding-bottom: 10px;
+        .note-item h3 {
+            margin: 0 0 10px 0;
+            color: #2d3748;
+            font-size: 1.1rem;
+        }
+
+        .note-item p {
+            margin: 0 0 10px 0;
+            color: #4a5568;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .note-item .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .note-item .tags span {
+            background: #edf2f7;
+            color: #4a5568;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .note-item .note-time {
+            font-size: 0.85rem;
+            color: #718096;
+            margin-top: 10px;
+        }
+
+        /* 拖动模式下的笔记样式 */
+        .note-item.draggable {
+            cursor: move;
+            padding-left: 30px;
+        }
+
+        .note-item.draggable::before {
+            content: '⋮⋮';
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #718096;
+            font-size: 20px;
+            opacity: 0.7;
         }
 
         .note-card .note-content {
@@ -1493,36 +1529,55 @@
         /* 笔记排序按钮样式 */
         .notes-section .header-controls {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #edf2f7;
         }
 
-        .notes-section .sort-button {
-            background: none;
+        .notes-section .header-controls h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: #2d3748;
+        }
+
+        /* 修改拖动排序按钮样式 */
+        .drag-sort-btn {
+            padding: 5px 10px;
+            background-color: #4a5568;
+            color: white;
             border: none;
-            cursor: pointer;
-            padding: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-            width: 30px;
-            height: 30px;
             border-radius: 4px;
-            background: #f8f9fa;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            margin-right: 10px;
         }
 
-        .notes-section .sort-button:hover {
-            background: #e9ecef;
+        .drag-sort-btn:hover {
+            background-color: #2d3748;
         }
 
-        .notes-section .sort-icon {
-            display: inline-block;
-            transition: transform 0.3s ease;
+        .drag-sort-btn.active {
+            background-color: #48bb78;
         }
 
-        .notes-section .sort-button.desc .sort-icon {
-            transform: rotate(180deg);
+        /* 拖动模式下的笔记样式 */
+        .note-item.draggable {
+            cursor: move;
+            position: relative;
+        }
+
+        .note-item.draggable::before {
+            content: '⋮⋮';
+            position: absolute;
+            left: -25px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #718096;
+            font-size: 20px;
+            opacity: 0.7;
         }
     </style>
 </head>
@@ -1555,49 +1610,49 @@
 
     <div class="main-wrapper">
         <h1>TC</h1>
-
+        
         <!-- 主要内容区域 -->
         <div class="content-grid">
             <!-- 左侧内容区域 -->
             <div class="main-content">
                 <!-- 链接管理界面 -->
                 <div id="linksContainer" class="links-section">
-                <div class="links-header">
-                    <div class="search-container">
+                    <div class="links-header">
+                        <div class="search-container">
                             <input type="text" class="search-input" id="searchInput" placeholder="搜索链接...">
-                        <div class="search-options">
-                            <div class="radio-group">
-                                <label class="radio-label">
-                                    <input type="radio" name="search-engine" value="baidu" checked>
-                                    百度
-                                </label>
-                                <label class="radio-label">
-                                    <input type="radio" name="search-engine" value="google">
-                                    谷歌
-                                </label>
+                            <div class="search-options">
+                                <div class="radio-group">
+                                    <label class="radio-label">
+                                        <input type="radio" name="search-engine" value="baidu" checked>
+                                        百度
+                                    </label>
+                                    <label class="radio-label">
+                                        <input type="radio" name="search-engine" value="google">
+                                        谷歌
+                                    </label>
+                                </div>
                             </div>
+                            <button class="search-button" onclick="searchLinks()">搜索</button>
                         </div>
-                        <button class="search-button" onclick="searchLinks()">搜索</button>
                     </div>
-                </div>
-                <div class="section-header">
-                    <h2 class="section-title">链接列表</h2>
-                    <div class="header-controls">
-                        <button class="sort-button" onclick="toggleCategorySort()" title="切换排序方向">
-                            <span class="sort-icon">↓</span>
-                        </button>
-                        <div class="category-filter">
+                    <div class="section-header">
+                        <h2 class="section-title">链接列表</h2>
+                        <div class="header-controls">
+                            <button class="sort-button" onclick="toggleCategorySort()" title="切换排序方向">
+                                <span class="sort-icon">↓</span>
+                            </button>
+                            <div class="category-filter">
                                 <div class="custom-select" onclick="toggleDropdown(event)">
                                     <div class="selected-option">显示所有分类</div>
                                     <div class="dropdown-menu">
                                         <div class="dropdown-item selected" data-value="all">显示所有分类</div>
-                        </div>
-                    </div>
-                </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="links-container">
-                    <!-- 链接列表将通过 JavaScript 动态生成 -->
+                        <!-- 链接列表将通过 JavaScript 动态生成 -->
                     </div>
                 </div>
 
@@ -1624,12 +1679,13 @@
                     <div class="section-header">
                         <h2 class="section-title">笔记列表</h2>
                         <div class="header-controls">
-                            <button class="sort-button" onclick="toggleNoteSort()" title="切换时间排序">
+                            <button class="sort-button" onclick="toggleNoteSort()" title="切换排序方向">
                                 <span class="sort-icon">↓</span>
                             </button>
+                            <button id="dragSortBtn" class="drag-sort-btn">启用拖动排序</button>
                         </div>
                     </div>
-                    <div class="notes-list" id="notesList">
+                    <div id="notesList" class="notes-list">
                         <!-- 笔记列表将通过JavaScript动态添加 -->
                     </div>
                 </div>
@@ -1736,12 +1792,11 @@
         // 默认favicon
         const defaultFaviconUrl = '/favicon.svg';
 
-        // 分类排序方向
-        let isCategoryDescSort = false;
-        
-        // 当前展开的分类
-        let currentExpandedCategory = null;
-        
+        // 全局变量声明
+        let isCategoryDescSort = false; // 默认升序排序
+        let expandedCategory = null; // 当前展开的分类
+        let currentSelectedCategory = 'all'; // 当前选中的分类
+
         // 处理favicon URL的辅助函数
         function getFaviconUrl(favicon) {
             console.log('[getFaviconUrl] 开始处理favicon:', favicon);
@@ -2024,165 +2079,123 @@
         }
 
         // 切换分类排序
-        function toggleCategorySort() {
+        async function toggleCategorySort() {
             console.log('toggleCategorySort 被调用');
             console.log('排序前状态:', isCategoryDescSort);
             
+            // 切换排序状态
             isCategoryDescSort = !isCategoryDescSort;
             console.log('切换后的排序状态:', isCategoryDescSort);
             
-            const sortButton = document.querySelector('.sort-button');
-            if (sortButton) {
-                console.log('更新排序按钮样式');
-                sortButton.classList.toggle('desc', isCategoryDescSort);
-                // 更新排序图标方向
-                const sortIcon = sortButton.querySelector('.sort-icon');
-                if (sortIcon) {
-                    console.log('更新排序图标方向');
-                    sortIcon.style.transform = isCategoryDescSort ? 'rotate(180deg)' : 'rotate(0deg)';
-                }
-            } else {
-                console.warn('未找到排序按钮元素');
-            }
+            // 更新排序按钮样式
+            console.log('更新排序按钮样式');
+            const sortButton = document.querySelector('#linksContainer .sort-button');
+            sortButton.classList.toggle('desc', isCategoryDescSort);
             
-            // 保存当前展开的分类
-            const expandedCategory = currentExpandedCategory;
-            console.log('当前展开的分类:', expandedCategory);
-            
-            // 保存当前选中的分类
-            const currentSelectedCategory = document.querySelector('.category-nav-header.active .category-name')?.textContent;
+            // 更新排序图标方向
+            console.log('更新排序图标方向');
+            const sortIcon = sortButton.querySelector('.sort-icon');
+            sortIcon.style.transform = isCategoryDescSort ? 'rotate(0deg)' : 'rotate(180deg)';
+
+            // 获取当前选中的分类
+            const selectedOption = document.querySelector('.selected-option');
+            currentSelectedCategory = selectedOption.textContent === '显示所有分类' ? 'all' : selectedOption.textContent;
             console.log('当前选中的分类:', currentSelectedCategory);
+
+            // 重新加载分类
+            await reloadCategoriesWithSort(expandedCategory, currentSelectedCategory);
             
-            reloadCategoriesWithSort(expandedCategory, currentSelectedCategory);
-            scrollToTop();
+            // 显示排序提示
+            utils.showToast(`分类已${isCategoryDescSort ? '降序' : '升序'}排列`);
         }
 
-        // 更新分类重新加载函数
-        async function reloadCategoriesWithSort(expandedCategory = null, selectedCategory = null) {
+        // 添加滚动到顶部函数
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        // 重新加载分类（带排序）
+        async function reloadCategoriesWithSort(expandedCategory = null, selectedCategory = 'all') {
+            console.log('reloadCategoriesWithSort 开始执行');
+            console.log('参数 - expandedCategory:', expandedCategory);
+            console.log('参数 - selectedCategory:', selectedCategory);
+            console.log('当前排序方向:', isCategoryDescSort ? 'desc' : 'asc');
+
             try {
-                console.log('reloadCategoriesWithSort 开始执行');
-                console.log('参数 - expandedCategory:', expandedCategory);
-                console.log('参数 - selectedCategory:', selectedCategory);
-                console.log('当前排序方向:', isCategoryDescSort ? 'desc' : 'asc');
-                
-                const response = await fetch(`${baseUrl}/api/categories?sort=${isCategoryDescSort ? 'desc' : 'asc'}`);
+                // 获取分类列表
+                const response = await fetch(`/api/categories?sort=${isCategoryDescSort ? 'desc' : 'asc'}`);
                 console.log('API响应状态:', response.status);
                 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error('获取分类失败');
                 }
                 
                 const categories = await response.json();
                 console.log('获取到的分类数据:', categories);
                 
                 // 更新分类过滤器
-                const categoryFilter = document.querySelector('.category-filter .dropdown-menu');
-                if (categoryFilter) {
-                    console.log('更新分类过滤器');
-                    categoryFilter.innerHTML = `<div class="dropdown-item ${selectedCategory === null || selectedCategory === 'all' ? 'selected' : ''}" data-value="all">显示所有分类</div>`;
-                    categories.forEach(category => {
-                        categoryFilter.innerHTML += `
-                            <div class="dropdown-item ${category === selectedCategory ? 'selected' : ''}" data-value="${category}">${category}</div>
-                        `;
-                    });
+                console.log('更新分类过滤器');
+                const dropdownMenu = document.querySelector('.dropdown-menu');
+                dropdownMenu.innerHTML = `
+                    <div class="dropdown-item ${selectedCategory === 'all' ? 'selected' : ''}" data-value="all">
+                        显示所有分类
+                    </div>
+                    ${categories.map(category => `
+                        <div class="dropdown-item ${selectedCategory === category ? 'selected' : ''}" data-value="${category}">
+                            ${category}
+                        </div>
+                    `).join('')}
+                `;
 
-                    // 重新绑定点击事件
-                    console.log('重新绑定分类过滤器点击事件');
-                    categoryFilter.querySelectorAll('.dropdown-item').forEach(item => {
-                        item.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            const value = e.target.dataset.value;
-                            const selectedText = e.target.textContent;
-                            const customSelect = e.target.closest('.custom-select');
-                            const selectedOption = customSelect.querySelector('.selected-option');
-                            
-                            // 更新选中状态
-                            categoryFilter.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('selected'));
-                            e.target.classList.add('selected');
-                            
-                            // 更新显示文本和值
-                            selectedOption.textContent = selectedText;
-                            selectedOption.setAttribute('data-value', value);
-                            
-                            // 触发分类切换
-                            handleCategoryFilterChange(value);
-                            
-                            // 关闭下拉框
-                            customSelect.classList.remove('open');
-                        });
-                    });
-                }
-                
-                // 更新添加链接表单的分类选择器
-                const addLinkDropdownMenu = document.querySelector('.link-form .dropdown-menu');
-                if (addLinkDropdownMenu) {
-                    console.log('更新添加链接表单的分类选择器');
-                    addLinkDropdownMenu.innerHTML = '';
-                    categories.forEach(category => {
-                        addLinkDropdownMenu.innerHTML += `
-                            <div class="dropdown-item" data-value="${category}">${category}</div>
-                        `;
-                    });
-
-                    // 重新绑定点击事件
-                    console.log('重新绑定添加链接表单分类选择器点击事件');
-                    addLinkDropdownMenu.querySelectorAll('.dropdown-item').forEach(item => {
-                        item.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            const value = e.target.dataset.value;
-                            const selectedText = e.target.textContent;
-                            const customSelect = e.target.closest('.custom-select');
-                            const selectedOption = customSelect.querySelector('.selected-option');
-                            
-                            // 更新选中状态
-                            addLinkDropdownMenu.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('selected'));
-                            e.target.classList.add('selected');
-                            
-                            // 更新显示文本和值
-                            selectedOption.textContent = selectedText;
-                            selectedOption.setAttribute('data-value', value);
-                            
-                            // 关闭下拉框
-                            customSelect.classList.remove('open');
-                        });
-                    });
-                }
-                
-                // 更新分类过滤器的选中项显示
-                const selectedOption = document.querySelector('.category-filter .selected-option');
-                if (selectedOption) {
-                    selectedOption.textContent = selectedCategory === 'all' || selectedCategory === null ? '显示所有分类' : selectedCategory;
-                    selectedOption.setAttribute('data-value', selectedCategory || 'all');
-                }
-                
-                // 重新加载链接列表，使用当前选中的分类
-                console.log('重新加载链接列表，使用分类:', selectedCategory || 'all');
-                await loadLinks(selectedCategory || 'all');
-                
                 // 更新侧边栏导航
-                await updateSidebarNav();
+                const categoryNav = document.getElementById('categoryNav');
+                const isNotesView = document.getElementById('notesContainer').style.display !== 'none';
                 
-                // 恢复选中状态
-                if (selectedCategory) {
-                    const categoryHeaders = document.querySelectorAll('.category-nav-header');
-                    categoryHeaders.forEach(header => {
-                        const categoryName = header.querySelector('.category-name');
-                        if (categoryName && categoryName.textContent === selectedCategory) {
-                            // 移除其他分类的active类
-                            categoryHeaders.forEach(h => h.classList.remove('active'));
-                            // 添加active类到当前分类
-                            header.classList.add('active');
-                        }
-                    });
+                if (isNotesView) {
+                    // 笔记视图的导航栏
+                    categoryNav.innerHTML = `
+                        <li class="category-nav-item">
+                            <div class="category-nav-header active" onclick="handleCategoryClick(event, 'notes')">
+                                <span class="category-name">我的笔记</span>
+                            </div>
+                        </li>
+                    `;
+                } else {
+                    // 链接视图的导航栏
+                    categoryNav.innerHTML = `
+                        <li class="category-nav-item">
+                            <div class="category-nav-header ${selectedCategory === 'all' ? 'active' : ''}" onclick="handleCategoryClick(event, 'all')">
+                                <span class="category-name">全部分类</span>
+                                <span class="link-count">${categories.length}</span>
+                            </div>
+                        </li>
+                        ${categories.map(category => `
+                            <li class="category-nav-item">
+                                <div class="category-nav-header ${category === selectedCategory ? 'active' : ''}" onclick="handleCategoryClick(event, '${category}')">
+                                    <span class="category-name">${category}</span>
+                                </div>
+                            </li>
+                        `).join('')}
+                    `;
                 }
                 
-                console.log('侧边栏导航更新完成');
-                console.log('reloadCategoriesWithSort 执行完成');
+                // 更新选中的选项显示
+                const selectedOption = document.querySelector('.selected-option');
+                selectedOption.textContent = selectedCategory === 'all' ? '显示所有分类' : selectedCategory;
                 
-                showToast(`分类已${isCategoryDescSort ? '降序' : '升序'}排列`);
+                // 只在链接视图时重新加载链接列表
+                if (!isNotesView) {
+                    console.log('重新加载链接列表，使用分类:', selectedCategory);
+                    await loadLinks(selectedCategory);
+                }
+                
+                console.log('reloadCategoriesWithSort 执行完成');
             } catch (error) {
                 console.error('重新加载分类失败:', error);
-                showToast('重新加载分类失败: ' + error.message, 'error');
+                utils.showToast('重新加载分类失败', 'error');
             }
         }
 
@@ -3398,7 +3411,7 @@
             renderNotes(notes) {
                 const notesList = document.getElementById('notesList');
                 notesList.innerHTML = notes.map(note => {
-                    // 添加HTML转义函数
+                    // HTML转义函数
                     const escapeHtml = (text) => {
                         if (!text) return '';
                         const div = document.createElement('div');
@@ -3406,26 +3419,20 @@
                         return div.innerHTML;
                     };
 
-                    // 添加JavaScript字符串转义函数
+                    // JavaScript字符串转义函数
                     const escapeJsString = (text) => {
                         if (!text) return '';
-                        return text
-                            .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // 移除控制字符
-                            .replace(/[\\'"]/g, '\\$&') // 转义引号和反斜杠
-                            .replace(/\n/g, '\\n') // 转义换行符
-                            .replace(/\r/g, '\\r') // 转义回车符
-                            .replace(/\t/g, '\\t') // 转义制表符
-                            .replace(/\f/g, '\\f') // 转义换页符
-                            .replace(/\v/g, '\\v') // 转义垂直制表符
-                            .replace(/\b/g, '\\b'); // 转义退格符
+                        // 先将文本转换为Base64编码，避免所有特殊字符问题
+                        return btoa(unescape(encodeURIComponent(text)));
                     };
                     
                     // 根据内容长度判断类名
                     const contentLength = note.content.length;
                     const cardClass = contentLength > 200 ? 'note-card long-content' : 'note-card short-content';
                     
-                    const escapedTitle = escapeJsString(note.title);
-                    const escapedContent = escapeJsString(note.content);
+                    // 预处理所有需要转义的内容
+                    const escapedTitle = escapeJsString(note.title || '');
+                    const escapedContent = escapeJsString(note.content || '');
                     const escapedTags = escapeJsString(note.tags || '');
                     
                     return `
@@ -3449,84 +3456,61 @@
             }
         };
 
-        function showNotes() {
-            // 隐藏链接相关内容
-            document.getElementById('linksContainer').style.display = 'none';
-            document.getElementById('linkTools').style.display = 'none';
-            
+        // 显示笔记视图
+        async function showNotes() {
             // 显示笔记相关内容
             document.getElementById('notesContainer').style.display = 'block';
             document.getElementById('noteTools').style.display = 'block';
             
+            // 隐藏链接相关内容
+            document.getElementById('linksContainer').style.display = 'none';
+            document.getElementById('linkTools').style.display = 'none';
+            
             // 更新导航栏状态
             document.querySelector('.nav-links a.active').classList.remove('active');
-            document.querySelector('.nav-links a:nth-child(2)').classList.add('active');
+            document.querySelector('.nav-links a:last-child').classList.add('active');
 
-            // 保持导航栏可见，但只显示笔记相关内容
-            const categoryNav = document.getElementById('categoryNav');
-            categoryNav.style.display = 'block';
+            try {
+                // 获取所有笔记
+                const response = await fetch(`${baseUrl}/api/notes`);
+                if (!response.ok) throw new Error('获取笔记失败');
+                const notes = await response.json();
+
+                // 更新侧边栏导航
+                const categoryNav = document.getElementById('categoryNav');
+                let navHtml = `
+                    <li class="category-nav-item">
+                        <div class="category-nav-header active" onclick="handleCategoryClick(event, 'notes')">
+                            <span class="category-name">我的笔记</span>
+                        </div>
+                        <div class="category-nav-links expanded">
+                `;
+
+                // 添加笔记标题到导航
+                notes.forEach(note => {
+                    navHtml += `
+                        <a href="#note-${note.id}" class="category-nav-link" onclick="scrollToNote(${note.id})">
+                            ${note.title}
+                        </a>
+                    `;
+                });
+
+                navHtml += `
+                        </div>
+                    </li>
+                `;
+
+                categoryNav.innerHTML = navHtml;
+            } catch (error) {
+                console.error('加载笔记导航失败:', error);
+                showToast('加载笔记导航失败: ' + error.message, 'error');
+            }
             
-            // 显示笔记导航项，隐藏其他导航项
-            categoryNav.querySelectorAll('.category-nav-item').forEach(item => {
-                const categoryName = item.querySelector('.category-name');
-                if (categoryName && categoryName.textContent.includes('我的笔记')) {
-                    item.style.display = 'block';  // 显示笔记导航项
-                    // 移除其他项的active类
-                    categoryNav.querySelectorAll('.category-nav-header').forEach(h => {
-                        h.classList.remove('active');
-                    });
-                    // 添加active类到"我的笔记"
-                    const notesHeader = item.querySelector('.category-nav-header');
-                    if (notesHeader) {
-                        notesHeader.classList.add('active');
-                        // 自动展开"我的笔记"
-                        const toggle = item.querySelector('.category-nav-toggle');
-                        const links = item.querySelector('.category-nav-links');
-                        if (toggle && links) {
-                            // 先移除所有展开状态
-                            toggle.classList.remove('expanded');
-                            links.classList.remove('expanded');
-                            links.style.display = 'none';
-                            
-                            // 延迟一帧后添加展开状态
-                            requestAnimationFrame(() => {
-                                toggle.classList.add('expanded');
-                                links.classList.add('expanded');
-                                links.style.display = 'block';
-                                currentExpandedCategory = 'notes';
-                                
-                                // 加载笔记列表
-                                fetch(`${baseUrl}/api/notes`)
-                                    .then(response => response.json())
-                                    .then(notes => {
-                                        const escapeHtml = (text) => {
-                                            const div = document.createElement('div');
-                                            div.textContent = text;
-                                            return div.innerHTML;
-                                        };
-                                        links.innerHTML = notes.map(note => `
-                                            <a href="#" class="category-nav-link" onclick="showNoteDetail(${note.id}); return false;" title="${escapeHtml(note.content)}">
-                                                ${escapeHtml(note.title)}
-                                            </a>
-                                        `).join('');
-                                    })
-                                    .catch(error => {
-                                        console.error('加载笔记列表失败:', error);
-                                        showToast('加载笔记列表失败', 'error');
-                                    });
-                            });
-                        }
-                    }
-                } else {
-                    item.style.display = 'none';
-                }
-            });
-            
-            // 加载所有笔记
-            noteManager.loadNotes();
+            // 加载笔记列表
+            loadNotes();
         }
 
-        function showLinks() {
+        async function showLinks() {
             // 显示链接相关内容
             document.getElementById('linksContainer').style.display = 'block';
             document.getElementById('linkTools').style.display = 'block';
@@ -3539,34 +3523,18 @@
             document.querySelector('.nav-links a.active').classList.remove('active');
             document.querySelector('.nav-links a:first-child').classList.add('active');
 
-            // 显示所有导航项，但隐藏笔记相关项
-            const categoryNav = document.getElementById('categoryNav');
-            categoryNav.style.display = 'block';
-            categoryNav.querySelectorAll('.category-nav-item').forEach(item => {
-                const categoryName = item.querySelector('.category-name');
-                if (categoryName && categoryName.textContent.includes('我的笔记')) {
-                    item.style.display = 'none';
-                } else {
-                    item.style.display = 'block';
-                }
-            });
+            // 重新初始化导航栏
+            await updateSidebarNav();
             
-            // 隐藏第一个分隔线（笔记下方的分隔线）
-            const firstDivider = categoryNav.querySelector('.category-nav-divider');
-            if (firstDivider) {
-                firstDivider.style.display = 'none';
-            }
+            // 加载所有链接
+            await filterLinksByCategory('all');
+        }
 
-            // 确保"全部分类"保持选中状态，但不触发额外的加载
-            const allCategoriesHeader = Array.from(categoryNav.querySelectorAll('.category-nav-header'))
-                .find(header => header.textContent.includes('全部分类'));
-            if (allCategoriesHeader) {
-                categoryNav.querySelectorAll('.category-nav-header').forEach(header => {
-                    if (header !== allCategoriesHeader && !header.querySelector('.category-name')?.textContent.includes('我的笔记')) {
-                        header.classList.remove('active');
-                    }
-                });
-                allCategoriesHeader.classList.add('active');
+        // 添加笔记滚动函数
+        function scrollToNote(noteId) {
+            const noteElement = document.getElementById(`note-${noteId}`);
+            if (noteElement) {
+                noteElement.scrollIntoView({ behavior: 'smooth' });
             }
         }
 
@@ -3675,32 +3643,48 @@
             }
         });
 
+        // HTML转义函数
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
         // 添加笔记编辑对话框函数
         function editNoteDialog(id, title, content, tags) {
             const overlay = document.createElement('div');
             overlay.className = 'edit-dialog-overlay';
             
-            // 解码HTML实体
-            const decodeHtml = (html) => {
-                const txt = document.createElement('textarea');
-                txt.innerHTML = html;
-                return txt.value;
+            // 解码Base64并还原文本
+            const decodeBase64 = (base64) => {
+                if (!base64) return '';
+                try {
+                    return decodeURIComponent(escape(atob(base64)));
+                } catch (e) {
+                    console.error('解码失败:', e);
+                    return '';
+                }
             };
+            
+            const decodedTitle = decodeBase64(title);
+            const decodedContent = decodeBase64(content);
+            const decodedTags = decodeBase64(tags);
             
             overlay.innerHTML = `
                 <div class="edit-dialog">
                     <div class="edit-dialog-title">编辑笔记</div>
                     <div class="edit-form-group">
                         <label for="editNoteTitle">笔记标题</label>
-                        <input type="text" id="editNoteTitle" value="${decodeHtml(title)}">
+                        <input type="text" id="editNoteTitle" value="${escapeHtml(decodedTitle)}">
                     </div>
                     <div class="edit-form-group">
                         <label for="editNoteContent">笔记内容</label>
-                        <textarea id="editNoteContent" style="min-height: 150px; width: 100%;">${decodeHtml(content)}</textarea>
+                        <textarea id="editNoteContent" style="min-height: 150px; width: 100%;">${escapeHtml(decodedContent)}</textarea>
                     </div>
                     <div class="edit-form-group">
                         <label for="editNoteTags">标签</label>
-                        <input type="text" id="editNoteTags" value="${decodeHtml(tags)}" placeholder="用逗号分隔多个标签">
+                        <input type="text" id="editNoteTags" value="${escapeHtml(decodedTags)}" placeholder="用逗号分隔多个标签">
                     </div>
                     <div class="edit-dialog-buttons">
                         <button class="edit-dialog-button edit-dialog-cancel" onclick="this.closest('.edit-dialog-overlay').remove()">取消</button>
@@ -4156,83 +4140,241 @@
         }
 
         // 笔记排序方向
-        let isNoteDescSort = true;
+        let isNoteDescSort = true; // 默认降序排序
 
         // 切换笔记排序
         async function toggleNoteSort() {
-            console.log('toggleNoteSort 被调用');
-            console.log('排序前状态:', isNoteDescSort);
+            console.log('=== 开始切换笔记排序 ===');
+            console.log('当前排序状态:', isNoteDescSort);
             
+            // 切换排序状态
             isNoteDescSort = !isNoteDescSort;
             console.log('切换后的排序状态:', isNoteDescSort);
             
-            const sortButton = document.querySelector('#notesContainer .sort-button');
-            if (sortButton) {
-                console.log('更新排序按钮样式');
-                sortButton.classList.toggle('desc', isNoteDescSort);
-                // 更新排序图标方向
-                const sortIcon = sortButton.querySelector('.sort-icon');
-                if (sortIcon) {
-                    console.log('更新排序图标方向');
-                    sortIcon.style.transform = isNoteDescSort ? 'rotate(180deg)' : 'rotate(0deg)';
-                }
-            }
+            // 更新排序按钮样式
+            const sortButton = document.querySelector('.notes-section .sort-button');
+            console.log('获取到排序按钮:', sortButton);
             
-            await noteManager.loadNotes();
-            showToast(`笔记已${isNoteDescSort ? '降序' : '升序'}排列`);
+            const sortIcon = sortButton.querySelector('.sort-icon');
+            console.log('获取到排序图标:', sortIcon);
+            
+            // 更新图标方向
+            const newTransform = isNoteDescSort ? 'rotate(0deg)' : 'rotate(180deg)';
+            console.log('设置新的transform:', newTransform);
+            sortIcon.style.transform = newTransform;
+
+            try {
+                console.log('准备发送排序请求...');
+                const url = `/api/notes?orderBy=created_at&sort=${isNoteDescSort ? 'desc' : 'asc'}`;
+                console.log('请求URL:', url);
+                
+                const response = await fetch(url);
+                console.log('获取到响应:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error('获取笔记失败');
+                }
+                
+                const notes = await response.json();
+                console.log('获取到笔记数据:', notes.length, '条');
+                console.log('笔记数据示例:', notes[0]);
+                
+                // 更新笔记列表显示
+                const notesList = document.getElementById('notesList');
+                console.log('获取到笔记列表容器:', notesList);
+                
+                // 在更新HTML之前记录当前的笔记顺序
+                console.log('更新前的笔记顺序:', notes.map(n => ({
+                    id: n.id,
+                    title: n.title,
+                    created_at: n.created_at
+                })));
+                
+                notesList.innerHTML = notes.map(note => `
+                    <div class="note-item" data-id="${note.id}" data-time="${note.created_at}">
+                        <h3>${note.title}</h3>
+                        <p>${note.content}</p>
+                        ${note.tags ? `<div class="tags">${note.tags.split(',').map(tag => `<span>${tag.trim()}</span>`).join('')}</div>` : ''}
+                        <div class="note-time">${new Date(note.created_at).toLocaleString()}</div>
+                    </div>
+                `).join('');
+                
+                console.log('笔记列表已更新');
+                utils.showToast('排序更新成功');
+            } catch (error) {
+                console.error('更新笔记排序失败:', error);
+                utils.showToast('更新排序失败', 'error');
+            }
+            console.log('=== 笔记排序切换完成 ===');
         }
 
         // 修改笔记管理器
         Object.assign(noteManager, {
             async loadNotes() {
+                console.log('=== 开始加载笔记列表 ===');
                 try {
-                    const response = await fetch(`${baseUrl}/api/notes?sort=${isNoteDescSort ? 'desc' : 'asc'}`);
+                    const url = `/api/notes?orderBy=created_at&sort=${isNoteDescSort ? 'desc' : 'asc'}`;
+                    console.log('加载笔记请求URL:', url);
+                    
+                    const response = await fetch(url);
+                    console.log('加载笔记响应状态:', response.status);
+                    
                     if (!response.ok) {
                         throw new Error('获取笔记失败');
                     }
-
+                    
                     const notes = await response.json();
-                    this.renderNotes(notes);
-
-                    // 初始化拖拽排序
+                    console.log('获取到笔记数据:', notes.length, '条');
+                    
+                    // 更新笔记列表显示
                     const notesList = document.getElementById('notesList');
-                    if (notesList) {
-                        new Sortable(notesList, {
-                            animation: 150,
-                            ghostClass: 'note-card-ghost',
-                            onEnd: async function(evt) {
-                                const noteIds = Array.from(notesList.children).map(
-                                    card => card.getAttribute('data-note-id')
-                                );
-                                
-                                try {
-                                    const response = await fetch(`${baseUrl}/api/notes/reorder`, {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json'
-                                        },
-                                        body: JSON.stringify({ noteIds })
-                                    });
-                                    
-                                    if (!response.ok) {
-                                        throw new Error('更新笔记顺序失败');
-                                    }
-                                    
-                                    showToast('笔记顺序更新成功');
-                                } catch (error) {
-                                    console.error('更新笔记顺序失败:', error);
-                                    showToast('更新笔记顺序失败', 'error');
-                                }
-                            }
-                        });
-                    }
+                    console.log('获取到笔记列表容器:', notesList);
+                    
+                    notesList.innerHTML = notes.map(note => `
+                        <div class="note-item" data-id="${note.id}" data-time="${note.created_at}">
+                            <h3>${note.title}</h3>
+                            <p>${note.content}</p>
+                            ${note.tags ? `<div class="tags">${note.tags.split(',').map(tag => `<span>${tag.trim()}</span>`).join('')}</div>` : ''}
+                            <div class="note-time">${new Date(note.created_at).toLocaleString()}</div>
+                        </div>
+                    `).join('');
+                    
+                    console.log('笔记列表已更新');
                 } catch (error) {
                     console.error('加载笔记失败:', error);
-                    utils.showToast('加载笔记失败', 'error');
+                }
+                console.log('=== 笔记列表加载完成 ===');
+            }
+        });
+
+        // 笔记列表容器
+        const notesContainer = document.getElementById('notes-container');
+
+        let isDragMode = false;
+        let sortable = null;
+        const dragSortBtn = document.getElementById('dragSortBtn');
+        const notesList = document.getElementById('notesList');
+
+        // 切换拖动排序模式
+        dragSortBtn.addEventListener('click', () => {
+            isDragMode = !isDragMode;
+            dragSortBtn.textContent = isDragMode ? '完成排序' : '启用拖动排序';
+            dragSortBtn.classList.toggle('active', isDragMode);
+
+            const noteItems = document.querySelectorAll('.note-item');
+            noteItems.forEach(item => {
+                item.classList.toggle('draggable', isDragMode);
+            });
+
+            if (isDragMode) {
+                // 启用拖拽排序
+                sortable = new Sortable(notesList, {
+                    animation: 150,
+                    onEnd: async function(evt) {
+                        const noteIds = Array.from(notesList.children)
+                            .map(item => item.getAttribute('data-id'));
+                        
+                        try {
+                            const response = await fetch('/api/notes/reorder', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({ noteIds }),
+                            });
+
+                            if (!response.ok) {
+                                throw new Error('排序更新失败');
+                            }
+                        } catch (error) {
+                            console.error('更新笔记顺序失败:', error);
+                            // 可以在这里添加错误提示
+                        }
+                    }
+                });
+            } else {
+                // 禁用拖拽排序
+                if (sortable) {
+                    sortable.destroy();
+                    sortable = null;
                 }
             }
         });
+
+        // 加载笔记列表
+        async function loadNotes() {
+            console.log('=== 开始加载笔记列表 ===');
+            try {
+                const url = `/api/notes?orderBy=created_at&sort=${isNoteDescSort ? 'desc' : 'asc'}`;
+                console.log('加载笔记请求URL:', url);
+                
+                const response = await fetch(url);
+                console.log('加载笔记响应状态:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error('获取笔记失败');
+                }
+                
+                const notes = await response.json();
+                console.log('获取到笔记数据:', notes.length, '条');
+                
+                // 更新笔记列表显示
+                const notesList = document.getElementById('notesList');
+                console.log('获取到笔记列表容器:', notesList);
+                
+                notesList.innerHTML = notes.map(note => `
+                    <div class="note-item" data-id="${note.id}" data-time="${note.created_at}">
+                        <h3>${note.title}</h3>
+                        <p>${note.content}</p>
+                        ${note.tags ? `<div class="tags">${note.tags.split(',').map(tag => `<span>${tag.trim()}</span>`).join('')}</div>` : ''}
+                        <div class="note-time">${new Date(note.created_at).toLocaleString()}</div>
+                    </div>
+                `).join('');
+                
+                console.log('笔记列表已更新');
+            } catch (error) {
+                console.error('加载笔记失败:', error);
+            }
+            console.log('=== 笔记列表加载完成 ===');
+        }
+
+        // 页面加载时获取笔记列表
+        loadNotes();
+
+        // 处理分类点击
+        function handleCategoryClick(event, category) {
+            event.preventDefault();
+            
+            // 如果点击的是笔记分类
+            if (category === 'notes') {
+                showNotes();
+                return;
+            }
+
+            // 更新全局状态
+            currentSelectedCategory = category;
+            expandedCategory = category === 'all' ? null : category;
+
+            // 更新导航栏选中状态
+            const headers = document.querySelectorAll('.category-nav-header');
+            headers.forEach(header => header.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            // 更新分类过滤器选中状态
+            const dropdownItems = document.querySelectorAll('.dropdown-item');
+            dropdownItems.forEach(item => item.classList.remove('selected'));
+            const selectedItem = Array.from(dropdownItems).find(item => item.dataset.value === category);
+            if (selectedItem) {
+                selectedItem.classList.add('selected');
+            }
+
+            // 更新选中的选项显示
+            const selectedOption = document.querySelector('.selected-option');
+            selectedOption.textContent = category === 'all' ? '显示所有分类' : category;
+
+            // 加载对应分类的链接
+            loadLinks(category);
+        }
     </script>
 </body>
-</html> 
 </html> 

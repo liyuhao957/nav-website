@@ -1049,7 +1049,7 @@ app.get('/api/notes', async (req, res) => {
         if (orderBy === 'sort_order') {
             query = `SELECT * FROM notes ORDER BY sort_order ${sort === 'desc' ? 'DESC' : 'ASC'}`;
         } else {
-            query = `SELECT * FROM notes ORDER BY created_at ${sort === 'desc' ? 'DESC' : 'ASC'}`;
+            query = `SELECT * FROM notes ORDER BY created_at ${sort === 'desc' ? 'DESC' : 'ASC'}, id ${sort === 'desc' ? 'DESC' : 'ASC'}`;
         }
         
         const rows = await executeQuery(query);
@@ -1401,7 +1401,7 @@ app.get('/api/notes', async (req, res) => {
         if (orderBy === 'sort_order') {
             query = `SELECT * FROM notes ORDER BY sort_order ${sort === 'desc' ? 'DESC' : 'ASC'}`;
         } else {
-            query = `SELECT * FROM notes ORDER BY created_at ${sort === 'desc' ? 'DESC' : 'ASC'}`;
+            query = `SELECT * FROM notes ORDER BY created_at ${sort === 'desc' ? 'DESC' : 'ASC'}, id ${sort === 'desc' ? 'DESC' : 'ASC'}`;
         }
         
         const rows = await executeQuery(query);
