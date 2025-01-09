@@ -1796,6 +1796,7 @@
         let isCategoryDescSort = false; // 默认升序排序
         let expandedCategory = null; // 当前展开的分类
         let currentSelectedCategory = 'all'; // 当前选中的分类
+        let currentExpandedCategory = null; // 当前展开的分类
 
         // 处理favicon URL的辅助函数
         function getFaviconUrl(favicon) {
@@ -4353,7 +4354,7 @@
 
             // 更新全局状态
             currentSelectedCategory = category;
-            expandedCategory = category === 'all' ? null : category;
+            currentExpandedCategory = category === 'all' ? null : category;
 
             // 更新导航栏选中状态
             const headers = document.querySelectorAll('.category-nav-header');
