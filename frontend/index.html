@@ -1907,9 +1907,8 @@
 
         // 全局变量声明
         let isCategoryDescSort = false; // 默认升序排序
-        let expandedCategory = null; // 当前展开的分类
-        let currentSelectedCategory = 'all'; // 当前选中的分类
-        let currentExpandedCategory = null; // 当前展开的分类
+        let currentExpandedCategory = null;
+        let categoryElements = new Map(); // 初始化 categoryElements Map
 
         // 处理favicon URL的辅助函数
         function getFaviconUrl(favicon) {
@@ -3089,112 +3088,30 @@
         // 更新侧边栏导航
         async function updateSidebarNav() {
             const nav = document.getElementById('categoryNav');
-            nav.innerHTML = '';
-
-            const categoryElements = new Map();
-
-            try {
-                // 添加笔记导航
-                const notesLi = document.createElement('li');
-                notesLi.className = 'category-nav-item';
-                notesLi.innerHTML = `
-                    <div class="category-nav-header">
-                        <span class="category-nav-toggle">▶</span>
-                        <span class="category-name">我的笔记</span>
-                    </div>
-                    <div class="category-nav-links"></div>
-                `;
-
-                // 根据当前视图设置笔记导航项的显示状态
-                const isNotesView = document.getElementById('notesContainer').style.display === 'block';
-                notesLi.style.display = isNotesView ? 'block' : 'none';
-
-                const notesHeader = notesLi.querySelector('.category-nav-header');
-                const notesToggle = notesLi.querySelector('.category-nav-toggle');
-                const notesLinks = notesLi.querySelector('.category-nav-links');
-                let notesLoaded = false;
-
-                notesHeader.addEventListener('click', async () => {
-                    // 移除所有分类的active类
-                    nav.querySelectorAll('.category-nav-header').forEach(h => {
-                        h.classList.remove('active');
-                    });
-                    // 添加active类到"我的笔记"
-                    notesHeader.classList.add('active');
-
-                    if (currentExpandedCategory === 'notes') {
-                        notesToggle.classList.remove('expanded');
-                        notesLinks.classList.remove('expanded');
-                        currentExpandedCategory = null;
-                        return;
-                    }
-
-                    if (currentExpandedCategory) {
-                        const prevElement = categoryElements.get(currentExpandedCategory);
-                        if (prevElement) {
-                            prevElement.toggle.classList.remove('expanded');
-                            prevElement.links.classList.remove('expanded');
-                        }
-                    }
-
-                    notesToggle.classList.add('expanded');
-                    notesLinks.classList.add('expanded');
-                    currentExpandedCategory = 'notes';
-
-                    if (!notesLoaded) {
-                        try {
-                            const response = await fetch(`${baseUrl}/api/notes`);
-                            if (!response.ok) throw new Error('获取笔记失败');
-                            
-                            const notes = await response.json();
-                            notesLinks.innerHTML = notes.map(note => `
-                                <a href="#" class="category-nav-link" onclick="showNoteDetail(${note.id}); return false;" title="${note.content}">
-                                    ${note.title}
-                                </a>
-                            `).join('');
-                            
-                            notesLoaded = true;
-                        } catch (error) {
-                            console.error('加载笔记列表失败:', error);
-                            showToast('加载笔记列表失败', 'error');
-                        }
-                    }
-                });
-
-                nav.appendChild(notesLi);
-
-                const divider = document.createElement('div');
-                divider.className = 'category-nav-divider';
-                divider.style.display = isNotesView ? 'block' : 'none';  // 根据当前视图设置分隔线的显示状态
-                nav.appendChild(divider);
-
-                // 添加"全部分类"选项
+            nav.innerHTML = '';  // 清空现有内容
+            
+            // 创建"全部分类"选项
                 const allCategoriesLi = document.createElement('li');
                 allCategoriesLi.className = 'category-nav-item';
                 allCategoriesLi.innerHTML = `
                     <div class="category-nav-header active">
-                        <span>全部分类</span>
+                    <span class="category-name">全部分类</span>
                     </div>
                 `;
 
                 const allCategoriesHeader = allCategoriesLi.querySelector('.category-nav-header');
-
                 allCategoriesHeader.addEventListener('click', async () => {
-                    // 移除所有分类的active类，包括"全部分类"
-                    nav.querySelectorAll('.category-nav-header').forEach(h => {
-                        h.classList.remove('active');
-                    });
+                // 移除所有分类的active类
+                nav.querySelectorAll('.category-nav-header').forEach(h => h.classList.remove('active'));
                     allCategoriesHeader.classList.add('active');
-
-                    // 更新分类筛选器的选中状态
-                    const filterSelect = document.querySelector('.category-filter .selected-option');
-                    const filterItems = document.querySelectorAll('.category-filter .dropdown-item');
                     
                     // 更新筛选器的显示文本和值
+                const filterSelect = document.querySelector('.selected-option');
                     filterSelect.textContent = '显示所有分类';
                     filterSelect.setAttribute('data-value', 'all');
                     
                     // 更新筛选器选项的选中状态
+                const filterItems = document.querySelectorAll('.category-filter .dropdown-item');
                     filterItems.forEach(item => {
                         item.classList.remove('selected');
                         if (item.getAttribute('data-value') === 'all') {
@@ -3202,9 +3119,10 @@
                         }
                     });
 
+                // 收起当前展开的分类
                     if (currentExpandedCategory) {
                         const element = categoryElements.get(currentExpandedCategory);
-                        if (element) {
+                    if (element && element.toggle && element.links) {
                             element.toggle.classList.remove('expanded');
                             element.links.classList.remove('expanded');
                         }
@@ -3217,11 +3135,29 @@
 
                 nav.appendChild(allCategoriesLi);
 
+            // 获取并排序分类
                 const response = await fetch(`${baseUrl}/api/categories?sort=${isCategoryDescSort ? 'desc' : 'asc'}`);
                 if (!response.ok) throw new Error('获取分类失败');
                 const categories = await response.json();
 
-                for (const category of categories) {
+            // 更新分类元素和排序值
+                categories.forEach((category, index) => {
+                    const existingData = categoryElements.get(category) || {};
+                    categoryElements.set(category, {
+                        ...existingData,
+                        order: categories.length - index
+                    });
+                });
+
+            // 对分类进行排序
+                const sortedCategories = categories.sort((a, b) => {
+                    const categoryOrderA = categoryElements.get(a)?.order || 0;
+                    const categoryOrderB = categoryElements.get(b)?.order || 0;
+                    return isCategoryDescSort ? categoryOrderB - categoryOrderA : categoryOrderA - categoryOrderB;
+                });
+
+            // 创建分类导航项
+                for (const category of sortedCategories) {
                     const li = document.createElement('li');
                     li.className = 'category-nav-item';
                     li.innerHTML = `
@@ -3235,10 +3171,18 @@
                     const header = li.querySelector('.category-nav-header');
                     const toggle = li.querySelector('.category-nav-toggle');
                     const links = li.querySelector('.category-nav-links');
-                    let linksLoaded = false;
 
-                    categoryElements.set(category, { header, toggle, links, li });
+                // 更新分类元素数据
+                const existingData = categoryElements.get(category) || {};
+                categoryElements.set(category, {
+                    ...existingData,
+                    header,
+                    toggle,
+                    links,
+                    li
+                });
 
+                // 设置点击事件
                     header.addEventListener('click', async () => {
                         // 移除所有分类的active类，包括"全部分类"
                         nav.querySelectorAll('.category-nav-header').forEach(h => {
@@ -3246,19 +3190,16 @@
                         });
                         header.classList.add('active');
 
-                        // 更新分类筛选器的选中状态
-                        const categoryName = header.querySelector('.category-name').textContent;
-                        const filterSelect = document.querySelector('.category-filter .selected-option');
-                        const filterItems = document.querySelectorAll('.category-filter .dropdown-item');
-                        
                         // 更新筛选器的显示文本和值
-                        filterSelect.textContent = categoryName;
-                        filterSelect.setAttribute('data-value', categoryName);
+                        const filterSelect = document.querySelector('.selected-option');
+                        filterSelect.textContent = category;
+                        filterSelect.setAttribute('data-value', category);
                         
                         // 更新筛选器选项的选中状态
+                        const filterItems = document.querySelectorAll('.category-filter .dropdown-item');
                         filterItems.forEach(item => {
                             item.classList.remove('selected');
-                            if (item.getAttribute('data-value') === categoryName) {
+                            if (item.getAttribute('data-value') === category) {
                                 item.classList.add('selected');
                             }
                         });
@@ -3267,37 +3208,30 @@
                             toggle.classList.remove('expanded');
                             links.classList.remove('expanded');
                             currentExpandedCategory = null;
-                            
-                            await loadLinks(category);
-                            scrollToTop();
-                            return;
-                        }
-
-                        if (currentExpandedCategory) {
-                            const prevElement = categoryElements.get(currentExpandedCategory);
-                            if (prevElement) {
-                                prevElement.toggle.classList.remove('expanded');
-                                prevElement.links.classList.remove('expanded');
+                        } else {
+                            if (currentExpandedCategory) {
+                                const prevElement = categoryElements.get(currentExpandedCategory);
+                                if (prevElement && prevElement.toggle && prevElement.links) {
+                                    prevElement.toggle.classList.remove('expanded');
+                                    prevElement.links.classList.remove('expanded');
+                                }
                             }
-                        }
 
-                        toggle.classList.add('expanded');
-                        links.classList.add('expanded');
-                        currentExpandedCategory = category;
+                            toggle.classList.add('expanded');
+                            links.classList.add('expanded');
+                            currentExpandedCategory = category;
 
-                        if (!linksLoaded) {
+                            // 加载分类下的链接
                             try {
-                                const linksResponse = await fetch(`${baseUrl}/api/links/${encodeURIComponent(category)}`);
-                                if (!linksResponse.ok) throw new Error('获取链接失败');
+                                const response = await fetch(`${baseUrl}/api/links/${encodeURIComponent(category)}`);
+                                if (!response.ok) throw new Error('获取分类链接失败');
                                 
-                                const categoryLinks = await linksResponse.json();
+                                const categoryLinks = await response.json();
                                 links.innerHTML = categoryLinks.map(link => `
-                                    <a href="${link.url}" class="category-nav-link" target="_blank" title="${link.description || ''}">
+                                    <a href="#" class="category-nav-link" onclick="showLinkDetail(${link.id}); return false;" title="${link.title}">
                                         ${link.title}
                                     </a>
                                 `).join('');
-                                
-                                linksLoaded = true;
                             } catch (error) {
                                 console.error('加载分类链接失败:', error);
                                 showToast('加载分类链接失败', 'error');
@@ -3309,10 +3243,6 @@
                     });
 
                     nav.appendChild(li);
-                }
-            } catch (error) {
-                console.error('加载分类导航失败:', error);
-                showToast('加载分类导航失败: ' + error.message, 'error');
             }
         }
 
@@ -4074,20 +4004,27 @@
         }
 
         // 过滤指定分类的链接
-        async function filterLinksByCategory(category) {
+        async function filterLinksByCategory(category = 'all') {
+            console.log('开始过滤分类:', category);
+            console.log('当前排序状态:', isCategoryDescSort ? '降序' : '升序');
+            
             try {
-                console.log(`开始过滤分类: ${category}`);
-                console.log('当前排序状态:', isCategoryDescSort ? '降序' : '升序');
-
-                // 先获取当前所有分类
+                // 获取所有分类
                 const categoriesResponse = await fetch(`${baseUrl}/api/categories?sort=${isCategoryDescSort ? 'desc' : 'asc'}`);
-                if (!categoriesResponse.ok) {
-                    throw new Error('获取分类失败');
-                }
+                if (!categoriesResponse.ok) throw new Error('获取分类失败');
                 const categories = await categoriesResponse.json();
                 console.log('当前所有分类:', categories);
 
-                // 使用原有的API路径格式
+                // 更新分类排序值
+                categories.forEach((category, index) => {
+                    const existingData = categoryElements.get(category) || {};
+                    categoryElements.set(category, {
+                        ...existingData,
+                        order: categories.length - index
+                    });
+                });
+
+                // 获取链接数据
                 const response = await fetch(`${baseUrl}/api/links/${encodeURIComponent(category)}`);
                 if (!response.ok) {
                     throw new Error('获取链接失败');
@@ -4137,7 +4074,10 @@
 
                 // 对分类进行排序
                 const sortedCategories = Object.keys(groupedLinks).sort((a, b) => {
-                    return isCategoryDescSort ? b.localeCompare(a) : a.localeCompare(b);
+                    const categoryOrderA = categoryElements.get(a)?.order || 0;
+                    const categoryOrderB = categoryElements.get(b)?.order || 0;
+                    // 使用 isCategoryDescSort 替代 sortDirection
+                    return isCategoryDescSort ? categoryOrderB - categoryOrderA : categoryOrderA - categoryOrderB;
                 });
                 console.log('排序后的分类顺序:', sortedCategories);
                 
